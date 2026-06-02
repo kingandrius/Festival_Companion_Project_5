@@ -1,5 +1,8 @@
-# Festival_Companion_Project_5
-A repository for the 5th group project, Festival Companion
-// Frontend - Andy
-// Backend - Nikolay
-// AI Integration - Nicholas
+
+   ## Running the code
+
+  Run `npm i` to install the dependencies.
+
+  Run `npm run dev` to start the development server.
+  
+  Run npx vite to start the server!
