@@ -26,7 +26,7 @@ export function RootLayout() {
         <Outlet />
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-slate-gray border-t border-slate-gray-light">
+      <nav className="fixed bottom-0 left-0 right-0 bg-slate-gray border-t border-neon-blue/40" style={{ boxShadow: "0 -4px 24px -4px rgba(0,217,255,0.18), 0 -1px 0 rgba(0,217,255,0.35)" }}>
         <div className="flex items-center justify-around h-20 max-w-screen-sm mx-auto px-2">
           {navItems.map((item) => {
             const Icon = item.icon;

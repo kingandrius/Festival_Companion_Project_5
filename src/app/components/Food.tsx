@@ -77,7 +77,7 @@ export function Food() {
       {/* Header */}
       <header className="bg-slate-gray border-b border-slate-gray-light px-4 pt-4 pb-3 sticky top-0 z-10">
         <div className="max-w-screen-sm mx-auto">
-          <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center justify-center gap-3 mb-3">
             <span className="text-2xl">🍽️</span>
             <h1 className="text-xl text-neon-green font-bold tracking-wider">FOOD & DRINKS</h1>
           </div>

@@ -55,7 +55,7 @@ const locations: Location[] = [
     type: "food",
     x: 58,
     y: 52,
-    color: "neon-green",
+    color: "neon-orange",
     details: "International food trucks, vegan options, and gourmet street food.",
     waitTime: "5–10 mins",
   },
@@ -65,7 +65,7 @@ const locations: Location[] = [
     type: "medical",
     x: 64,
     y: 84,
-    color: "neon-pink",
+    color: "neon-red",
     details: "Medical assistance and emergency services available 24/7.",
   },
   {
@@ -83,7 +83,7 @@ const locations: Location[] = [
     type: "food",
     x: 27,
     y: 22,
-    color: "neon-green",
+    color: "neon-orange",
     details: "Quick bites right next to Main Stage. Grab food between sets without missing a beat.",
     waitTime: "3–7 mins",
   },
@@ -316,16 +316,16 @@ export function Map() {
             <circle cx="50" cy="66.5" r="0.55" fill="#ffd700" opacity="0.6" />
 
             {/* ── FOOD COURT (x:58 y:52) — central festival area ── */}
-            <rect x="53" y="48" width="11" height="8" rx="1.5" fill="#141a0a" stroke="#10d98e" strokeWidth="0.3" opacity="0.8" />
+            <rect x="53" y="48" width="11" height="8" rx="1.5" fill="#1a1206" stroke="#ff8c00" strokeWidth="0.3" opacity="0.8" />
 
             {/* ── FIRST AID (x:64 y:84) — near entrance, right ── */}
-            <rect x="58" y="79" width="12" height="7" rx="1" fill="#1a0808" stroke="#ff4466" strokeWidth="0.3" opacity="0.8" />
+            <rect x="58" y="79" width="12" height="7" rx="1" fill="#1a0808" stroke="#ff2244" strokeWidth="0.3" opacity="0.8" />
 
             {/* ── LOCKER ZONE (x:34 y:84) — near entrance, left ── */}
             <rect x="28" y="79" width="12" height="7" rx="1" fill="#0a0818" stroke="#9d4edd" strokeWidth="0.3" opacity="0.8" />
 
             {/* ── FOOD COURT ZONE B (x:27 y:22) — near Main Stage, left ── */}
-            <rect x="21" y="17" width="10" height="8" rx="1.5" fill="#141a0a" stroke="#10d98e" strokeWidth="0.3" opacity="0.8" />
+            <rect x="21" y="17" width="10" height="8" rx="1.5" fill="#1a1206" stroke="#ff8c00" strokeWidth="0.3" opacity="0.8" />
             {/* Short connector path from zone B to stage area */}
             <rect x="31" y="19" width="2" height="4" fill="#3a3020" rx="0.5" />
 
@@ -397,19 +397,18 @@ export function Map() {
         </div>
         </div>{/* end centering wrapper */}
 
-        {/* Legend — sits just above the 80px fixed bottom nav */}
-        <div className="absolute bottom-[88px] left-4 z-30 bg-slate-gray/90 backdrop-blur-sm rounded-xl p-3 space-y-1.5 border border-slate-gray-light">
-          <p className="text-xs font-bold text-muted-foreground mb-1 tracking-wider">LEGEND</p>
+        {/* Legend — compact horizontal bar just inside the top of the map viewport */}
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 bg-slate-gray/90 backdrop-blur-sm rounded-full px-4 py-1.5 border border-slate-gray-light">
           {([
-            { Icon: Music,           iconColor: "#a0a0b0", label: "Stage (each colour unique)" },
-            { Icon: UtensilsCrossed, iconColor: "#10d98e", label: "Food" },
-            { Icon: Heart,           iconColor: "#ff1493", label: "Medical" },
+            { Icon: Music,           iconColor: "#a0a0b0", label: "Stages" },
+            { Icon: UtensilsCrossed, iconColor: "#ff8c00", label: "Food" },
+            { Icon: Heart,           iconColor: "#ff2244", label: "Medical" },
             { Icon: Package,         iconColor: "#9d4edd", label: "Facilities" },
             { Icon: Droplets,        iconColor: "#6a6a8a", label: "Toilets" },
           ] as const).map(({ Icon, iconColor, label }) => (
-            <div key={label} className="flex items-center gap-2">
+            <div key={label} className="flex items-center gap-1">
               <Icon className="w-3 h-3 flex-shrink-0" style={{ color: iconColor }} strokeWidth={2.5} />
-              <span className="text-xs text-foreground">{label}</span>
+              <span className="text-[10px] text-muted-foreground whitespace-nowrap">{label}</span>
             </div>
           ))}
         </div>

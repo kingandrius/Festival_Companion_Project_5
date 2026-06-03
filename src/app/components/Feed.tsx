@@ -1,7 +1,6 @@
-import { useState } from "react";
-import { Music, MapPin, Clock, Cloud, Sun, CloudRain, CloudSun, Settings, Moon, X } from "lucide-react";
+import { Music, MapPin, Clock, Cloud, Sun, CloudRain, CloudSun, Moon } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 
 // Mock weather data — replace fetchWeather() with a real API call (e.g. OpenWeatherMap)
 // GET https://api.openweathermap.org/data/2.5/forecast?q=Eindhoven&appid=YOUR_KEY&units=metric
@@ -22,7 +21,6 @@ function WeatherIcon({ code, className }: { code: string; className?: string }) 
 
 export function Feed() {
   const { theme, toggleTheme } = useTheme();
-  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // ───────────────────────────────────────────────────────────────────────────
   // DATABASE SHAPE — replace with a query that returns performances currently
@@ -98,11 +96,31 @@ export function Feed() {
               FESTIVAL<span className="text-neon-pink">BUDDY</span>
             </h1>
           </div>
+          {/* Inline dark/light toggle */}
           <button
-            onClick={() => setSettingsOpen(true)}
-            className="p-2 hover:bg-slate-gray-light rounded-lg transition-colors active:scale-95"
+            onClick={toggleTheme}
+            className="flex items-center gap-2 p-1.5 hover:bg-slate-gray-light rounded-xl transition-colors active:scale-95"
           >
-            <Settings className="w-6 h-6 text-foreground" strokeWidth={2} />
+            <Sun
+              className="w-4 h-4 transition-colors duration-200"
+              style={{ color: theme === "light" ? "var(--neon-yellow)" : "var(--muted-foreground)" }}
+              strokeWidth={2}
+            />
+            <div
+              className="relative w-11 h-6 rounded-full transition-colors duration-300 flex-shrink-0"
+              style={{ backgroundColor: theme === "dark" ? "var(--neon-blue)" : "var(--slate-gray-light)" }}
+            >
+              <motion.div
+                className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm"
+                animate={{ x: theme === "dark" ? 22 : 2 }}
+                transition={{ type: "spring", stiffness: 500, damping: 30 }}
+              />
+            </div>
+            <Moon
+              className="w-4 h-4 transition-colors duration-200"
+              style={{ color: theme === "dark" ? "var(--neon-blue)" : "var(--muted-foreground)" }}
+              strokeWidth={2}
+            />
           </button>
         </div>
       </header>
@@ -208,74 +226,6 @@ export function Feed() {
         </div>
       </section>
 
-      {/* Settings bottom sheet */}
-      <AnimatePresence>
-        {settingsOpen && (
-          <>
-            <motion.div
-              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setSettingsOpen(false)}
-            />
-            <motion.div
-              className="fixed bottom-0 left-0 right-0 z-50 bg-slate-gray border-t border-slate-gray-light rounded-t-3xl max-w-screen-sm mx-auto"
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", stiffness: 380, damping: 34 }}
-            >
-              <div className="pt-3 pb-2 px-4">
-                <div className="w-10 h-1 bg-muted-foreground/30 rounded-full mx-auto mb-4" />
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="font-bold text-foreground text-lg">Settings</h2>
-                  <button
-                    onClick={() => setSettingsOpen(false)}
-                    className="p-2 hover:bg-slate-gray-light rounded-lg transition-colors active:scale-90"
-                  >
-                    <X className="w-5 h-5 text-muted-foreground" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="px-4 pb-10 space-y-4">
-                {/* Dark / Light mode row */}
-                <div className="flex items-center justify-between bg-deep-bg rounded-2xl px-4 py-4">
-                  <div className="flex items-center gap-3">
-                    {theme === "dark"
-                      ? <Moon className="w-5 h-5 text-neon-blue" strokeWidth={2} />
-                      : <Sun className="w-5 h-5 text-neon-yellow" strokeWidth={2} />
-                    }
-                    <div>
-                      <p className="text-foreground font-semibold">
-                        {theme === "dark" ? "Dark Mode" : "Light Mode"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {theme === "dark" ? "Switch to a lighter look" : "Switch to a darker look"}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Toggle pill */}
-                  <button
-                    onClick={toggleTheme}
-                    className="relative w-14 h-7 rounded-full transition-colors duration-300 focus:outline-none flex-shrink-0"
-                    style={{ backgroundColor: theme === "dark" ? "var(--neon-blue)" : "var(--slate-gray-light)" }}
-                  >
-                    <motion.div
-                      className="absolute top-0.5 w-6 h-6 bg-white rounded-full shadow-md"
-                      animate={{ x: theme === "dark" ? 28 : 2 }}
-                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                    />
-                  </button>
-                </div>
-
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

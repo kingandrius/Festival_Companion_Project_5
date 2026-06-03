@@ -3,17 +3,17 @@
 :root {
   --font-size: 16px;
   --background: #ffffff;
-  --foreground: oklch(0.145 0 0);
+  --foreground: #18181f;
   --card: #ffffff;
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: #18181f;
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
+  --popover-foreground: #18181f;
   --primary: #030213;
   --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.95 0.0058 264.53);
   --secondary-foreground: #030213;
   --muted: #ececf0;
-  --muted-foreground: #717182;
+  --muted-foreground: #202030;
   --accent: #e9ebef;
   --accent-foreground: #030213;
   --destructive: #d4183d;
@@ -46,9 +46,11 @@
   --neon-pink: #cc0066;
   --neon-purple: #7a30b8;
   --neon-yellow: #9a7d00;
-  --deep-bg: #f4f4f8;
-  --slate-gray: #e8e8f0;
-  --slate-gray-light: #d0d0de;
+  --neon-orange: #c45e00;
+  --neon-red: #cc1133;
+  --deep-bg: #f0f0f6;
+  --slate-gray: #dcdce8;
+  --slate-gray-light: #c4c4d4;
 }
 
 .dark {
@@ -92,6 +94,8 @@
   --neon-pink: #ff1493;
   --neon-purple: #9d4edd;
   --neon-yellow: #ffd700;
+  --neon-orange: #ff8c00;
+  --neon-red: #ff2244;
   --deep-bg: #0a0a0f;
   --slate-gray: #1a1a24;
   --slate-gray-light: #2a2a38;
@@ -142,6 +146,8 @@
   --color-neon-pink: var(--neon-pink);
   --color-neon-purple: var(--neon-purple);
   --color-neon-yellow: var(--neon-yellow);
+  --color-neon-orange: var(--neon-orange);
+  --color-neon-red: var(--neon-red);
   --color-deep-bg: var(--deep-bg);
   --color-slate-gray: var(--slate-gray);
   --color-slate-gray-light: var(--slate-gray-light);
