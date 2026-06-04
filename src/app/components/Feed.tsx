@@ -1,16 +1,42 @@
+import { useState, useEffect } from "react";
 import { Music, MapPin, Clock, Cloud, Sun, CloudRain, CloudSun, Moon } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { motion } from "motion/react";
 
-// Mock weather data — replace fetchWeather() with a real API call (e.g. OpenWeatherMap)
-// GET https://api.openweathermap.org/data/2.5/forecast?q=Eindhoven&appid=YOUR_KEY&units=metric
-const weatherData = {
+// Fallback weather data
+const defaultWeatherData = {
   city: "Eindhoven",
   country: "NL",
   condition: "Partly Cloudy",
   conditionCode: "partly-cloudy",
   tempC: 19,
 };
+
+async function fetchWeather(city: string = "Eindhoven") {
+  const apiKey = import.meta.env.VITE_WEATHER_API_KEY as string;
+  if (!apiKey) {
+    console.error("VITE_WEATHER_API_KEY is not set");
+    return null;
+  }
+  const url = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=metric`;
+  
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+    const current = data.list[0];
+    
+    return {
+      city: data.city.name,
+      country: data.city.country,
+      condition: current.weather[0].main,
+      conditionCode: current.weather[0].main.toLowerCase().replace(" ", "-"),
+      tempC: Math.round(current.main.temp),
+    };
+  } catch (error) {
+    console.error("Weather fetch failed:", error);
+    return null;
+  }
+}
 
 function WeatherIcon({ code, className }: { code: string; className?: string }) {
   if (code === "rain") return <CloudRain className={className} />;
@@ -21,6 +47,13 @@ function WeatherIcon({ code, className }: { code: string; className?: string }) 
 
 export function Feed() {
   const { theme, toggleTheme } = useTheme();
+  const [weather, setWeather] = useState(defaultWeatherData);
+
+  useEffect(() => {
+    fetchWeather().then((data) => {
+      if (data) setWeather(data);
+    });
+  }, []);
 
   // ───────────────────────────────────────────────────────────────────────────
   // DATABASE SHAPE — replace with a query that returns performances currently
@@ -84,7 +117,7 @@ export function Feed() {
     // TODO: populate from database
   ];
 
-  const w = weatherData;
+  const w = weather;
 
   return (
     <div className="min-h-screen bg-deep-bg">
