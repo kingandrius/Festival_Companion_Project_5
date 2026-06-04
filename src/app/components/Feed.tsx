@@ -3,14 +3,13 @@ import { Music, MapPin, Clock, Cloud, Sun, CloudRain, CloudSun, Moon } from "luc
 import { useTheme } from "../context/ThemeContext";
 import { motion } from "motion/react";
 
-// Fallback weather data
-const defaultWeatherData = {
-  city: "Eindhoven",
-  country: "NL",
-  condition: "Partly Cloudy",
-  conditionCode: "partly-cloudy",
-  tempC: 19,
-};
+type Weather = {
+  city: string;
+  country: string;
+  condition: string;
+  conditionCode: string;
+  tempC: number;
+} | null;
 
 async function fetchWeather(city: string = "Eindhoven") {
   const apiKey = import.meta.env.VITE_WEATHER_API_KEY as string;
@@ -47,7 +46,7 @@ function WeatherIcon({ code, className }: { code: string; className?: string }) 
 
 export function Feed() {
   const { theme, toggleTheme } = useTheme();
-  const [weather, setWeather] = useState(defaultWeatherData);
+  const [weather, setWeather] = useState<Weather>(null);
 
   useEffect(() => {
     fetchWeather().then((data) => {
@@ -117,7 +116,7 @@ export function Feed() {
     // TODO: populate from database
   ];
 
-  const w = weather;
+
 
   return (
     <div className="min-h-screen bg-deep-bg">
@@ -160,19 +159,25 @@ export function Feed() {
 
       <section className="px-4 pt-5 max-w-screen-sm mx-auto">
         {/* Weather bar */}
-        <div className="bg-slate-gray border border-slate-gray-light rounded-2xl px-6 py-6 mb-5 flex items-center gap-5">
-          <WeatherIcon code={w.conditionCode} className="w-16 h-16 text-neon-blue flex-shrink-0" />
-          <div>
-            <div className="flex items-baseline gap-3">
-              <span className="text-5xl font-bold text-foreground">{w.tempC}°C</span>
-              <span className="text-xl text-neon-pink">{w.condition}</span>
-            </div>
-            <div className="flex items-center gap-1 mt-1">
-              <MapPin className="w-4 h-4 text-neon-blue" />
-              <span className="text-sm text-neon-blue font-medium">{w.city}, {w.country}</span>
+        {weather ? (
+          <div className="bg-slate-gray border border-slate-gray-light rounded-2xl px-6 py-6 mb-5 flex items-center gap-5">
+            <WeatherIcon code={weather.conditionCode} className="w-16 h-16 text-neon-blue flex-shrink-0" />
+            <div>
+              <div className="flex items-baseline gap-3">
+                <span className="text-5xl font-bold text-foreground">{weather.tempC}°C</span>
+                <span className="text-xl text-neon-pink">{weather.condition}</span>
+              </div>
+              <div className="flex items-center gap-1 mt-1">
+                <MapPin className="w-4 h-4 text-neon-blue" />
+                <span className="text-sm text-neon-blue font-medium">{weather.city}, {weather.country}</span>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="bg-slate-gray border border-slate-gray-light rounded-2xl px-6 py-6 mb-5 text-center">
+            <p className="text-muted-foreground text-sm">Loading weather...</p>
+          </div>
+        )}
 
         <h2 className="text-lg mb-4 text-neon-blue font-bold tracking-wide">
           HAPPENING NOW
