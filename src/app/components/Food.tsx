@@ -130,7 +130,7 @@ export function Food() {
           <div className="text-center py-16">
             <p className="text-2xl mb-3">🍽️</p>
             <p className="text-muted-foreground font-semibold">No food trucks listed yet</p>
-            <p className="text-xs text-muted-foreground mt-1 opacity-60">Connect your database to populate the food guide</p>
+            <p className="text-xs text-muted-foreground mt-1 opacity-60">CONNECT OUR DATABASE TO POPULATE!</p>
           </div>
         ) : (
           <>
