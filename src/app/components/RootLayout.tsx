@@ -22,10 +22,10 @@ export function RootLayout() {
 
   return (
     <div className={`${theme} h-screen w-screen bg-deep-bg flex flex-col overflow-hidden`}>
-      {/* Persistent light/dark toggle — fixed top-right on every screen */}
+      {/* Persistent light/dark toggle — sits in the top-right, vertically centred within the header */}
       <button
         onClick={toggleTheme}
-        className="fixed top-3 right-3 z-50 flex items-center gap-1.5 bg-slate-gray/90 backdrop-blur-sm border border-slate-gray-light px-2 py-1.5 rounded-xl shadow-sm active:scale-95 transition-transform"
+        className="fixed top-0 right-0 z-50 h-16 flex items-center pr-4 gap-1.5 active:scale-95 transition-transform"
       >
         <Sun
           className="w-3.5 h-3.5 transition-colors duration-200"

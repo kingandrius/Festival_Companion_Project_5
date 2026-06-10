@@ -224,7 +224,7 @@ export function Map() {
   return (
     <div className="min-h-screen bg-deep-bg flex flex-col">
       <header className="bg-slate-gray border-b border-slate-gray-light px-4 py-4 sticky top-0 z-10">
-        <div className="flex items-center justify-center gap-3">
+        <div className="flex items-center gap-3 max-w-screen-sm mx-auto">
           <span className="text-2xl">🗺️</span>
           <h1 className="text-xl text-neon-pink font-bold tracking-wider">FESTIVAL MAP</h1>
         </div>

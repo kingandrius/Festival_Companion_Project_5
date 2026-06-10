@@ -68,7 +68,7 @@ export function AIAssistant() {
   return (
     <div className="h-screen bg-deep-bg flex flex-col">
       <header className="bg-slate-gray border-b border-slate-gray-light px-4 py-4 sticky top-0 z-10">
-        <div className="flex items-center justify-center gap-3 max-w-screen-sm mx-auto">
+        <div className="flex items-center gap-3 max-w-screen-sm mx-auto">
           <div className="p-2 bg-neon-purple rounded-full">
             <Bot className="w-6 h-6 text-deep-bg" strokeWidth={2.5} />
           </div>
