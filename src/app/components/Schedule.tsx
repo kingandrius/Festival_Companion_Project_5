@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Heart, MapPin, Clock, ChevronRight } from "lucide-react";
 import { motion } from "motion/react";
-import { supabase } from "../../lib/supabase";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SUPABASE INTEGRATION — performances table
@@ -95,25 +94,31 @@ export function Schedule() {
 
   return (
     <div className="min-h-screen bg-deep-bg">
-      <header className="bg-slate-gray border-b border-slate-gray-light px-4 py-4 sticky top-0 z-10">
-        <div className="flex items-center gap-3 max-w-screen-sm mx-auto">
+      <header
+        className="px-4 py-4 sticky top-0 z-10 border-b"
+        style={{
+          background: "linear-gradient(to bottom, rgba(16,217,142,0.13), rgba(26,26,36,0) 100%), var(--slate-gray)",
+          borderBottomColor: "rgba(16,217,142,0.3)",
+          boxShadow: "0 4px 24px -4px rgba(16,217,142,0.15)",
+        }}
+      >
+        <div className="flex items-center gap-3 max-w-screen-sm mx-auto mb-3">
           <span className="text-2xl">🎤</span>
-          <h1 className="text-xl text-neon-green font-bold tracking-wider">EVENT SCHEDULE</h1>
+          <h1 className="text-xl text-neon-green font-bold tracking-wider" style={{ textShadow: "0 0 12px rgba(16,217,142,0.7), 0 0 30px rgba(16,217,142,0.3)" }}>EVENT SCHEDULE</h1>
         </div>
-      </header>
 
-      <div className="sticky top-[60px] z-10 bg-deep-bg border-b border-slate-gray-light">
-        <div className="flex gap-2 px-4 py-3 max-w-screen-sm mx-auto">
+        {/* Day selector */}
+        <div className="flex gap-2 max-w-screen-sm mx-auto mb-2">
           {days.map((day) => {
             const active = selectedDay === day.id;
             return (
               <motion.button
                 key={day.id}
                 onClick={() => setSelectedDay(day.id)}
-                className={`flex-1 py-3 px-4 rounded-lg font-bold transition-colors duration-200 ${
+                className={`flex-1 py-2 px-4 rounded-lg font-bold transition-colors duration-200 ${
                   active
                     ? "bg-neon-blue text-deep-bg"
-                    : "bg-slate-gray text-muted-foreground border border-slate-gray-light"
+                    : "bg-white/5 text-muted-foreground border border-white/10"
                 }`}
                 whileTap={{ scale: 0.86, y: 2 }}
                 animate={{ scale: 1, y: 0 }}
@@ -125,18 +130,19 @@ export function Schedule() {
           })}
         </div>
 
+        {/* Genre filter */}
         <div className="relative max-w-screen-sm mx-auto">
-          <div className="flex gap-3 px-4 pb-3 overflow-x-auto scrollbar-hide">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
             {categories.map((category) => {
               const active = selectedCategory === category;
               return (
                 <motion.button
                   key={category}
                   onClick={() => setSelectedCategory(category)}
-                  className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap transition-colors duration-200 ${
+                  className={`px-3 py-1.5 rounded-full font-semibold text-sm whitespace-nowrap transition-colors duration-200 ${
                     active
                       ? "bg-neon-pink text-foreground"
-                      : "bg-slate-gray text-muted-foreground"
+                      : "bg-white/5 text-muted-foreground border border-white/10"
                   }`}
                   whileTap={{ scale: 0.82 }}
                   transition={{ type: "spring", stiffness: 500, damping: 22 }}
@@ -152,12 +158,11 @@ export function Schedule() {
               );
             })}
           </div>
-          {/* Scroll hint */}
-          <div className="pointer-events-none absolute right-0 top-0 bottom-0 flex items-center pr-1 bg-gradient-to-l from-deep-bg via-deep-bg/60 to-transparent w-10">
-            <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" strokeWidth={2.5} />
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 flex items-center pr-1 bg-gradient-to-l from-slate-gray via-slate-gray/60 to-transparent w-8">
+            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground ml-auto" strokeWidth={2.5} />
           </div>
         </div>
-      </div>
+      </header>
 
       <section className="px-4 py-6 max-w-screen-sm mx-auto space-y-4 pb-24">
         {filteredSchedule.length === 0 ? (

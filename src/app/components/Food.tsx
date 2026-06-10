@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { MapPin, Clock, Star, ChevronRight, Search, Flame } from "lucide-react";
 import { motion } from "motion/react";
+import { useEffect } from "react";
 import { supabase } from "../../lib/supabase";
 
 interface FoodTruck {
@@ -17,6 +18,25 @@ interface FoodTruck {
   popular: string;
   open: boolean;
 }
+const [foodTrucks, setFoodTrucks] = useState<FoodTruck[]>([]);
+
+useEffect(() => {
+  async function fetchFoodTrucks() {
+    const { data, error } = await supabase
+      .from("food_trucks")
+      .select("*")
+      .order("name");
+
+    if (error) console.error(error);
+    else setFoodTrucks(data.map(truck => ({
+      ...truck,
+      waitTime:   truck.wait_time,
+      priceRange: truck.price_range,
+    })));
+  }
+
+  fetchFoodTrucks();
+}, []);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SUPABASE INTEGRATION — food_trucks table
@@ -71,25 +91,6 @@ interface FoodTruck {
 //            ))
 //        .subscribe();
 // ─────────────────────────────────────────────────────────────────────────────
-const [foodTrucks, setFoodTrucks] = useState<FoodTruck[]>([]);
-
-useEffect(() => {
-  async function fetchFoodTrucks() {
-    const { data, error } = await supabase
-      .from("food_trucks")
-      .select("*")
-      .order("name");
-
-    if (error) console.error(error);
-    else setFoodTrucks(data.map(truck => ({
-      ...truck,
-      waitTime:   truck.wait_time,
-      priceRange: truck.price_range,
-    })));
-  }
-
-  fetchFoodTrucks();
-}, []);
 // ─────────────────────────────────────────────────────────────────────────────
 // CUISINE FILTERS — update to match the categories in your food truck lineup.
 // The filter logic below checks truck.cuisine and truck.tags, so make sure
@@ -122,11 +123,18 @@ export function Food() {
   return (
     <div className="min-h-screen bg-deep-bg">
       {/* Header */}
-      <header className="bg-slate-gray border-b border-slate-gray-light px-4 pt-4 pb-3 sticky top-0 z-10">
+      <header
+        className="px-4 pt-4 pb-3 sticky top-0 z-10 border-b"
+        style={{
+          background: "linear-gradient(to bottom, rgba(16,217,142,0.13), rgba(26,26,36,0) 100%), var(--slate-gray)",
+          borderBottomColor: "rgba(16,217,142,0.3)",
+          boxShadow: "0 4px 24px -4px rgba(16,217,142,0.15)",
+        }}
+      >
         <div className="max-w-screen-sm mx-auto">
           <div className="flex items-center gap-3 mb-3">
             <span className="text-2xl">🍽️</span>
-            <h1 className="text-xl text-neon-green font-bold tracking-wider">FOOD & DRINKS</h1>
+            <h1 className="text-xl text-neon-green font-bold tracking-wider" style={{ textShadow: "0 0 12px rgba(16,217,142,0.7), 0 0 30px rgba(16,217,142,0.3)" }}>FOOD & DRINKS</h1>
           </div>
 
           {/* Search */}

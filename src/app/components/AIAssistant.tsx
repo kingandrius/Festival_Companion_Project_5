@@ -67,12 +67,19 @@ export function AIAssistant() {
 
   return (
     <div className="h-screen bg-deep-bg flex flex-col">
-      <header className="bg-slate-gray border-b border-slate-gray-light px-4 py-4 sticky top-0 z-10">
+      <header
+        className="px-4 py-4 sticky top-0 z-10 border-b"
+        style={{
+          background: "linear-gradient(to bottom, rgba(157,78,221,0.13), rgba(26,26,36,0) 100%), var(--slate-gray)",
+          borderBottomColor: "rgba(157,78,221,0.3)",
+          boxShadow: "0 4px 24px -4px rgba(157,78,221,0.15)",
+        }}
+      >
         <div className="flex items-center gap-3 max-w-screen-sm mx-auto">
           <div className="p-2 bg-neon-purple rounded-full">
             <Bot className="w-6 h-6 text-deep-bg" strokeWidth={2.5} />
           </div>
-          <h1 className="text-xl text-neon-purple font-bold tracking-wider">
+          <h1 className="text-xl text-neon-purple font-bold tracking-wider" style={{ textShadow: "0 0 12px rgba(157,78,221,0.7), 0 0 30px rgba(157,78,221,0.3)" }}>
             AI FESTIVAL GUIDE
           </h1>
         </div>

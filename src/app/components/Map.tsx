@@ -223,10 +223,34 @@ export function Map() {
 
   return (
     <div className="min-h-screen bg-deep-bg flex flex-col">
-      <header className="bg-slate-gray border-b border-slate-gray-light px-4 py-4 sticky top-0 z-10">
-        <div className="flex items-center gap-3 max-w-screen-sm mx-auto">
+      <header
+        className="px-4 py-4 sticky top-0 z-10 border-b"
+        style={{
+          background: "linear-gradient(to bottom, rgba(255,20,147,0.13), rgba(26,26,36,0) 100%), var(--slate-gray)",
+          borderBottomColor: "rgba(255,20,147,0.3)",
+          boxShadow: "0 4px 24px -4px rgba(255,20,147,0.15)",
+        }}
+      >
+        <div className="flex items-center gap-3 max-w-screen-sm mx-auto mb-3">
           <span className="text-2xl">🗺️</span>
-          <h1 className="text-xl text-neon-pink font-bold tracking-wider">FESTIVAL MAP</h1>
+          <h1 className="text-xl text-neon-pink font-bold tracking-wider" style={{ textShadow: "0 0 12px rgba(255,20,147,0.7), 0 0 30px rgba(255,20,147,0.3)" }}>FESTIVAL MAP</h1>
+        </div>
+        {/* Legend */}
+        <div className="max-w-screen-sm mx-auto flex justify-center">
+        <div className="flex items-center gap-4 bg-white/5 border border-white/15 rounded-full px-4 py-1.5">
+          {([
+            { Icon: Music,           iconColor: "#a0a0b0", label: "Stages" },
+            { Icon: UtensilsCrossed, iconColor: "#ff8c00", label: "Food" },
+            { Icon: Heart,           iconColor: "#ff2244", label: "Medical" },
+            { Icon: Package,         iconColor: "#9d4edd", label: "Facilities" },
+            { Icon: Droplets,        iconColor: "#6a6a8a", label: "Toilets" },
+          ] as const).map(({ Icon, iconColor, label }) => (
+            <div key={label} className="flex items-center gap-1">
+              <Icon className="w-3 h-3 flex-shrink-0" style={{ color: iconColor }} strokeWidth={2.5} />
+              <span className="text-[10px] text-muted-foreground whitespace-nowrap">{label}</span>
+            </div>
+          ))}
+        </div>
         </div>
       </header>
 
@@ -397,21 +421,6 @@ export function Map() {
         </div>
         </div>{/* end centering wrapper */}
 
-        {/* Legend — compact horizontal bar just inside the top of the map viewport */}
-        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3 bg-slate-gray/90 backdrop-blur-sm rounded-full px-4 py-1.5 border border-slate-gray-light">
-          {([
-            { Icon: Music,           iconColor: "#a0a0b0", label: "Stages" },
-            { Icon: UtensilsCrossed, iconColor: "#ff8c00", label: "Food" },
-            { Icon: Heart,           iconColor: "#ff2244", label: "Medical" },
-            { Icon: Package,         iconColor: "#9d4edd", label: "Facilities" },
-            { Icon: Droplets,        iconColor: "#6a6a8a", label: "Toilets" },
-          ] as const).map(({ Icon, iconColor, label }) => (
-            <div key={label} className="flex items-center gap-1">
-              <Icon className="w-3 h-3 flex-shrink-0" style={{ color: iconColor }} strokeWidth={2.5} />
-              <span className="text-[10px] text-muted-foreground whitespace-nowrap">{label}</span>
-            </div>
-          ))}
-        </div>
 
         {/* Zoom level badge */}
         {zoom !== 1 && (
