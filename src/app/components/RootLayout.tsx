@@ -1,11 +1,11 @@
 import { Outlet, Link, useLocation } from "react-router";
-import { Radio, Calendar, MapPin, Bot, Utensils } from "lucide-react";
+import { Radio, Calendar, MapPin, Bot, Utensils, Sun, Moon } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTheme } from "../context/ThemeContext";
 
 export function RootLayout() {
   const location = useLocation();
-  const { theme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
 
   const navItems = [
     { path: "/", label: "Feed", icon: Radio },
@@ -22,6 +22,33 @@ export function RootLayout() {
 
   return (
     <div className={`${theme} h-screen w-screen bg-deep-bg flex flex-col overflow-hidden`}>
+      {/* Persistent light/dark toggle — fixed top-right on every screen */}
+      <button
+        onClick={toggleTheme}
+        className="fixed top-3 right-3 z-50 flex items-center gap-1.5 bg-slate-gray/90 backdrop-blur-sm border border-slate-gray-light px-2 py-1.5 rounded-xl shadow-sm active:scale-95 transition-transform"
+      >
+        <Sun
+          className="w-3.5 h-3.5 transition-colors duration-200"
+          style={{ color: theme === "light" ? "var(--neon-yellow)" : "var(--muted-foreground)" }}
+          strokeWidth={2}
+        />
+        <div
+          className="relative w-9 h-5 rounded-full transition-colors duration-300 flex-shrink-0"
+          style={{ backgroundColor: theme === "dark" ? "var(--neon-blue)" : "var(--slate-gray-light)" }}
+        >
+          <motion.div
+            className="absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm"
+            animate={{ x: theme === "dark" ? 17 : 2 }}
+            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+          />
+        </div>
+        <Moon
+          className="w-3.5 h-3.5 transition-colors duration-200"
+          style={{ color: theme === "dark" ? "var(--neon-blue)" : "var(--muted-foreground)" }}
+          strokeWidth={2}
+        />
+      </button>
+
       <main className="flex-1 overflow-y-auto pb-20">
         <Outlet />
       </main>

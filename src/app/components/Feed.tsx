@@ -1,41 +1,14 @@
-import { useState, useEffect } from "react";
-import { Music, MapPin, Clock, Cloud, Sun, CloudRain, CloudSun, Moon } from "lucide-react";
-import { useTheme } from "../context/ThemeContext";
-import { motion } from "motion/react";
+import { Music, MapPin, Clock, Cloud, Sun, CloudRain, CloudSun } from "lucide-react";
 
-type Weather = {
-  city: string;
-  country: string;
-  condition: string;
-  conditionCode: string;
-  tempC: number;
-} | null;
-
-async function fetchWeather(city: string = "Eindhoven") {
-  const apiKey = import.meta.env.VITE_WEATHER_API_KEY as string;
-  if (!apiKey) {
-    console.error("VITE_WEATHER_API_KEY is not set");
-    return null;
-  }
-  const url = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=metric`;
-  
-  try {
-    const response = await fetch(url);
-    const data = await response.json();
-    const current = data.list[0];
-    
-    return {
-      city: data.city.name,
-      country: data.city.country,
-      condition: current.weather[0].main,
-      conditionCode: current.weather[0].main.toLowerCase().replace(" ", "-"),
-      tempC: Math.round(current.main.temp),
-    };
-  } catch (error) {
-    console.error("Weather fetch failed:", error);
-    return null;
-  }
-}
+// Mock weather data — replace fetchWeather() with a real API call (e.g. OpenWeatherMap)
+// GET https://api.openweathermap.org/data/2.5/forecast?q=Eindhoven&appid=YOUR_KEY&units=metric
+const weatherData = {
+  city: "Eindhoven",
+  country: "NL",
+  condition: "Partly Cloudy",
+  conditionCode: "partly-cloudy",
+  tempC: 19,
+};
 
 function WeatherIcon({ code, className }: { code: string; className?: string }) {
   if (code === "rain") return <CloudRain className={className} />;
@@ -45,34 +18,42 @@ function WeatherIcon({ code, className }: { code: string; className?: string }) 
 }
 
 export function Feed() {
-  const { theme, toggleTheme } = useTheme();
-  const [weather, setWeather] = useState<Weather>(null);
-
-  useEffect(() => {
-    fetchWeather().then((data) => {
-      if (data) setWeather(data);
-    });
-  }, []);
 
   // ───────────────────────────────────────────────────────────────────────────
-  // DATABASE SHAPE — replace with a query that returns performances currently
-  // in progress (start_time <= now <= end_time).
+  // SUPABASE INTEGRATION — "Happening Now" from the performances table
+  // ───────────────────────────────────────────────────────────────────────────
   //
-  // {
-  //   id: number,
-  //   artist: string,       // e.g. "Electric Pulse"
-  //   genre: string,        // e.g. "Electronic"
-  //   stage: string,        // e.g. "Main Stage"
-  //   time: string,         // e.g. "8:00 PM - 9:30 PM"
-  //   color: string,        // CSS token: "neon-blue" | "neon-pink" | "neon-green" | "neon-yellow"
-  // }
+  // 1. Make sure src/lib/supabase.ts is set up (see that file for instructions).
   //
-  // Example fetch:
-  //   const happeningNow = await supabase
-  //     .from("performances")
-  //     .select("*")
-  //     .lte("start_time", new Date().toISOString())
-  //     .gte("end_time",   new Date().toISOString());
+  // 2. Add these imports at the top of this file:
+  //      import { useState, useEffect } from "react";
+  //      import { supabase } from "../../lib/supabase";
+  //
+  // 3. Inside Feed(), replace the const below with:
+  //
+  //      const [happeningNow, setHappeningNow] = useState<...>([]);
+  //
+  //      useEffect(() => {
+  //        const now = new Date().toTimeString().slice(0, 8); // "HH:MM:SS"
+  //        supabase
+  //          .from("performances")
+  //          .select("*")
+  //          .lte("start_time", now)
+  //          .gte("end_time", now)
+  //          .then(({ data, error }) => {
+  //            if (error) console.error(error);
+  //            else if (data) setHappeningNow(
+  //              data.map((row) => ({
+  //                id:     row.id,
+  //                artist: row.artist,
+  //                genre:  row.subgenre,
+  //                stage:  row.stage,
+  //                time:   `${row.start_time} - ${row.end_time}`,
+  //                color:  row.stage_color,
+  //              }))
+  //            );
+  //          });
+  //      }, []);
   // ───────────────────────────────────────────────────────────────────────────
   const happeningNow: {
     id: number;
@@ -82,28 +63,48 @@ export function Feed() {
     time: string;
     color: string;
   }[] = [
-    // TODO: populate from database
+    // TODO: replace with Supabase fetch (see instructions above)
   ];
 
   // ───────────────────────────────────────────────────────────────────────────
-  // DATABASE SHAPE — replace with a query from your `announcements` table,
-  // ordered by created_at descending.
+  // SUPABASE INTEGRATION — Announcements table
+  // ───────────────────────────────────────────────────────────────────────────
   //
-  // {
-  //   id: number,
-  //   type: string,         // "food" | "alert" | "info"
-  //   title: string,        // short headline
-  //   message: string,      // body text
-  //   time: string,         // human-readable age, e.g. "5 mins ago"
-  //   color: string,        // CSS token: "neon-green" | "neon-pink" | "neon-purple"
-  // }
+  // 1. Inside Feed(), replace the const below with:
   //
-  // Example fetch:
-  //   const announcements = await supabase
-  //     .from("announcements")
-  //     .select("*")
-  //     .order("created_at", { ascending: false })
-  //     .limit(10);
+  //      const [announcements, setAnnouncements] = useState<...>([]);
+  //
+  //      useEffect(() => {
+  //        supabase
+  //          .from("announcements")
+  //          .select("*")
+  //          .order("created_at", { ascending: false })
+  //          .limit(10)
+  //          .then(({ data, error }) => {
+  //            if (error) console.error(error);
+  //            else if (data) setAnnouncements(
+  //              data.map((row) => ({
+  //                id:      row.id,
+  //                type:    row.type,
+  //                title:   row.title,
+  //                message: row.message,
+  //                color:   row.color,
+  //                // Convert DB timestamp to a human-readable age:
+  //                time: formatDistanceToNow(new Date(row.created_at), { addSuffix: true }),
+  //                // ^ install date-fns: pnpm add date-fns
+  //              }))
+  //            );
+  //          });
+  //
+  //        // Real-time: new announcements appear instantly
+  //        const channel = supabase
+  //          .channel("announcements")
+  //          .on("postgres_changes", { event: "INSERT", schema: "public", table: "announcements" },
+  //              (payload) => setAnnouncements((prev) => [payload.new as any, ...prev]))
+  //          .subscribe();
+  //
+  //        return () => { supabase.removeChannel(channel); };
+  //      }, []);
   // ───────────────────────────────────────────────────────────────────────────
   const announcements: {
     id: number;
@@ -113,10 +114,10 @@ export function Feed() {
     time: string;
     color: string;
   }[] = [
-    // TODO: populate from database
+    // TODO: replace with Supabase fetch (see instructions above)
   ];
 
-
+  const w = weatherData;
 
   return (
     <div className="min-h-screen bg-deep-bg">
@@ -128,56 +129,24 @@ export function Feed() {
               FESTIVAL<span className="text-neon-pink">BUDDY</span>
             </h1>
           </div>
-          {/* Inline dark/light toggle */}
-          <button
-            onClick={toggleTheme}
-            className="flex items-center gap-2 p-1.5 hover:bg-slate-gray-light rounded-xl transition-colors active:scale-95"
-          >
-            <Sun
-              className="w-4 h-4 transition-colors duration-200"
-              style={{ color: theme === "light" ? "var(--neon-yellow)" : "var(--muted-foreground)" }}
-              strokeWidth={2}
-            />
-            <div
-              className="relative w-11 h-6 rounded-full transition-colors duration-300 flex-shrink-0"
-              style={{ backgroundColor: theme === "dark" ? "var(--neon-blue)" : "var(--slate-gray-light)" }}
-            >
-              <motion.div
-                className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow-sm"
-                animate={{ x: theme === "dark" ? 22 : 2 }}
-                transition={{ type: "spring", stiffness: 500, damping: 30 }}
-              />
-            </div>
-            <Moon
-              className="w-4 h-4 transition-colors duration-200"
-              style={{ color: theme === "dark" ? "var(--neon-blue)" : "var(--muted-foreground)" }}
-              strokeWidth={2}
-            />
-          </button>
         </div>
       </header>
 
       <section className="px-4 pt-5 max-w-screen-sm mx-auto">
         {/* Weather bar */}
-        {weather ? (
-          <div className="bg-slate-gray border border-slate-gray-light rounded-2xl px-6 py-6 mb-5 flex items-center gap-5">
-            <WeatherIcon code={weather.conditionCode} className="w-16 h-16 text-neon-blue flex-shrink-0" />
-            <div>
-              <div className="flex items-baseline gap-3">
-                <span className="text-5xl font-bold text-foreground">{weather.tempC}°C</span>
-                <span className="text-xl text-neon-pink">{weather.condition}</span>
-              </div>
-              <div className="flex items-center gap-1 mt-1">
-                <MapPin className="w-4 h-4 text-neon-blue" />
-                <span className="text-sm text-neon-blue font-medium">{weather.city}, {weather.country}</span>
-              </div>
+        <div className="bg-slate-gray border border-slate-gray-light rounded-2xl px-6 py-6 mb-5 flex items-center gap-5">
+          <WeatherIcon code={w.conditionCode} className="w-16 h-16 text-neon-blue flex-shrink-0" />
+          <div>
+            <div className="flex items-baseline gap-3">
+              <span className="text-5xl font-bold text-foreground">{w.tempC}°C</span>
+              <span className="text-xl text-neon-pink">{w.condition}</span>
+            </div>
+            <div className="flex items-center gap-1 mt-1">
+              <MapPin className="w-4 h-4 text-neon-blue" />
+              <span className="text-sm text-neon-blue font-medium">{w.city}, {w.country}</span>
             </div>
           </div>
-        ) : (
-          <div className="bg-slate-gray border border-slate-gray-light rounded-2xl px-6 py-6 mb-5 text-center">
-            <p className="text-muted-foreground text-sm">Loading weather...</p>
-          </div>
-        )}
+        </div>
 
         <h2 className="text-lg mb-4 text-neon-blue font-bold tracking-wide">
           HAPPENING NOW

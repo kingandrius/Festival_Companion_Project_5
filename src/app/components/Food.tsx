@@ -18,29 +18,60 @@ interface FoodTruck {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DATABASE SHAPE — replace this array with a real fetch from your backend.
-// Each row in your `food_trucks` table should match this structure:
+// SUPABASE INTEGRATION — food_trucks table
+// ─────────────────────────────────────────────────────────────────────────────
 //
-// {
-//   id: number,           // unique food truck ID
-//   name: string,         // e.g. "Ember & Smoke BBQ"
-//   cuisine: string,      // e.g. "American BBQ"
-//   description: string,  // short description shown on the card
-//   location: string,     // e.g. "Zone A · Near Main Stage"
-//   waitTime: string,     // e.g. "8 min"  (shown only when open = true)
-//   rating: number,       // e.g. 4.8
-//   priceRange: string,   // "$" | "$$" | "$$$"
-//   tags: string[],       // e.g. ["Vegan", "Gluten-free"]  — used for filtering
-//   emoji: string,        // single emoji representing the cuisine
-//   popular: string,      // most popular dish, e.g. "Brisket Platter"
-//   open: boolean,        // whether the truck is currently serving
-// }
+// 1. Make sure src/lib/supabase.ts is set up (see that file for instructions).
 //
-// Example fetch (replace with your actual DB client):
-//   const foodTrucks = await supabase.from("food_trucks").select("*").order("name");
+// 2. Add these imports at the top of this file:
+//      import { useEffect } from "react";
+//      import { supabase } from "../../lib/supabase";
+//
+// 3. Inside the Food() component, add state and a fetch after the existing
+//    useState declarations:
+//
+//      const [foodTrucks, setFoodTrucks] = useState<FoodTruck[]>([]);
+//
+//      useEffect(() => {
+//        supabase
+//          .from("food_trucks")
+//          .select("*")
+//          .order("name")
+//          .then(({ data, error }) => {
+//            if (error) console.error("Failed to load food trucks:", error);
+//            else if (data) setFoodTrucks(
+//              data.map((row) => ({
+//                id:         row.id,
+//                name:       row.name,
+//                cuisine:    row.cuisine,
+//                description:row.description,
+//                location:   row.location,
+//                waitTime:   row.wait_time,    // Supabase uses snake_case
+//                rating:     row.rating,
+//                priceRange: row.price_range,
+//                tags:       row.tags ?? [],
+//                emoji:      row.emoji,
+//                popular:    row.popular,
+//                open:       row.open,
+//              }))
+//            );
+//          });
+//      }, []);
+//
+//    Then remove the `const foodTrucks: FoodTruck[] = []` line below,
+//    since it will be replaced by the useState above.
+//
+// 4. To update wait times in real-time (e.g. from a dashboard):
+//      supabase
+//        .channel("food_trucks")
+//        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "food_trucks" },
+//            (payload) => setFoodTrucks((prev) =>
+//              prev.map((t) => t.id === payload.new.id ? { ...t, ...payload.new } : t)
+//            ))
+//        .subscribe();
 // ─────────────────────────────────────────────────────────────────────────────
 const foodTrucks: FoodTruck[] = [
-  // TODO: populate from database
+  // TODO: replace with Supabase fetch (see instructions above)
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -95,31 +126,37 @@ export function Food() {
           </div>
 
           {/* Filters */}
-          <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
-            {cuisineFilters.map((filter) => {
-              const active = activeFilter === filter;
-              return (
-                <motion.button
-                  key={filter}
-                  onClick={() => setActiveFilter(filter)}
-                  className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors duration-200 ${
-                    active
-                      ? "bg-neon-green text-deep-bg font-semibold"
-                      : "bg-deep-bg border border-slate-gray-light text-muted-foreground"
-                  }`}
-                  whileTap={{ scale: 0.82 }}
-                  transition={{ type: "spring", stiffness: 500, damping: 22 }}
-                >
-                  <motion.span
-                    animate={active ? { scale: [0.88, 1.14, 1] } : {}}
-                    transition={{ type: "tween", duration: 0.22, ease: "easeOut" }}
-                    style={{ display: "block" }}
+          <div className="relative">
+            <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
+              {cuisineFilters.map((filter) => {
+                const active = activeFilter === filter;
+                return (
+                  <motion.button
+                    key={filter}
+                    onClick={() => setActiveFilter(filter)}
+                    className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-colors duration-200 ${
+                      active
+                        ? "bg-neon-green text-deep-bg font-semibold"
+                        : "bg-deep-bg border border-slate-gray-light text-muted-foreground"
+                    }`}
+                    whileTap={{ scale: 0.82 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 22 }}
                   >
-                    {filter}
-                  </motion.span>
-                </motion.button>
-              );
-            })}
+                    <motion.span
+                      animate={active ? { scale: [0.88, 1.14, 1] } : {}}
+                      transition={{ type: "tween", duration: 0.22, ease: "easeOut" }}
+                      style={{ display: "block" }}
+                    >
+                      {filter}
+                    </motion.span>
+                  </motion.button>
+                );
+              })}
+            </div>
+            {/* Scroll hint */}
+            <div className="pointer-events-none absolute right-0 top-0 bottom-0 flex items-center pr-1 bg-gradient-to-l from-slate-gray via-slate-gray/60 to-transparent w-10">
+              <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" strokeWidth={2.5} />
+            </div>
           </div>
         </div>
       </header>
@@ -130,7 +167,7 @@ export function Food() {
           <div className="text-center py-16">
             <p className="text-2xl mb-3">🍽️</p>
             <p className="text-muted-foreground font-semibold">No food trucks listed yet</p>
-            <p className="text-xs text-muted-foreground mt-1 opacity-60">CONNECT OUR DATABASE TO POPULATE!</p>
+            <p className="text-xs text-muted-foreground mt-1 opacity-60">Connect your database to populate the food guide</p>
           </div>
         ) : (
           <>

@@ -1,25 +1,51 @@
 import { useState } from "react";
-import { Heart, MapPin, Clock } from "lucide-react";
+import { Heart, MapPin, Clock, ChevronRight } from "lucide-react";
 import { motion } from "motion/react";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DATABASE SHAPE — replace this array with a real fetch from your backend.
-// Each row in your `performances` table should match this structure:
+// SUPABASE INTEGRATION — performances table
+// ─────────────────────────────────────────────────────────────────────────────
 //
-// {
-//   id: number,           // unique performance ID
-//   day: number,          // 1 = Friday, 2 = Saturday, 3 = Sunday
-//   artist: string,       // e.g. "Electric Pulse"
-//   subgenre: string,     // e.g. "Techno / House"
-//   stage: string,        // e.g. "Main Stage"
-//   stageColor: string,   // CSS token without var(): "neon-blue" | "neon-pink" | "neon-green" | "neon-yellow"
-//   startTime: string,    // e.g. "8:00 PM"
-//   endTime: string,      // e.g. "9:30 PM"
-//   category: string,     // must match one of the entries in `categories` below
-// }
+// 1. Make sure src/lib/supabase.ts is set up (see that file for instructions).
 //
-// Example fetch (replace with your actual DB client):
-//   const schedule = await supabase.from("performances").select("*").order("start_time");
+// 2. Add these imports at the top of this file:
+//      import { useState, useEffect } from "react";
+//      import { supabase } from "../../lib/supabase";
+//
+// 3. Inside the Schedule() component, replace the static `schedule` array
+//    declaration with the following:
+//
+//      const [schedule, setSchedule] = useState<typeof scheduleShape>([]);
+//
+//      useEffect(() => {
+//        supabase
+//          .from("performances")
+//          .select("*")
+//          .order("start_time")
+//          .then(({ data, error }) => {
+//            if (error) console.error("Failed to load performances:", error);
+//            else if (data) setSchedule(
+//              data.map((row) => ({
+//                id:         row.id,
+//                day:        row.day,
+//                artist:     row.artist,
+//                subgenre:   row.subgenre,
+//                stage:      row.stage,
+//                stageColor: row.stage_color,   // Supabase uses snake_case
+//                startTime:  row.start_time,
+//                endTime:    row.end_time,
+//                category:   row.category,
+//              }))
+//            );
+//          });
+//      }, []);
+//
+// 4. (Optional) For real-time updates when the lineup changes:
+//      supabase
+//        .channel("performances")
+//        .on("postgres_changes", { event: "*", schema: "public", table: "performances" },
+//            () => { /* re-fetch here */ })
+//        .subscribe();
 // ─────────────────────────────────────────────────────────────────────────────
 const schedule: {
   id: number;
@@ -32,7 +58,7 @@ const schedule: {
   endTime: string;
   category: string;
 }[] = [
-  // TODO: populate from database
+  // TODO: replace with Supabase fetch (see instructions above)
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -98,31 +124,37 @@ export function Schedule() {
           })}
         </div>
 
-        <div className="flex gap-3 px-4 pb-3 max-w-screen-sm mx-auto overflow-x-auto scrollbar-hide">
-          {categories.map((category) => {
-            const active = selectedCategory === category;
-            return (
-              <motion.button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap transition-colors duration-200 ${
-                  active
-                    ? "bg-neon-pink text-foreground"
-                    : "bg-slate-gray text-muted-foreground"
-                }`}
-                whileTap={{ scale: 0.82 }}
-                transition={{ type: "spring", stiffness: 500, damping: 22 }}
-              >
-                <motion.span
-                  animate={active ? { scale: [0.88, 1.14, 1] } : {}}
-                  transition={{ type: "tween", duration: 0.22, ease: "easeOut" }}
-                  style={{ display: "block" }}
+        <div className="relative max-w-screen-sm mx-auto">
+          <div className="flex gap-3 px-4 pb-3 overflow-x-auto scrollbar-hide">
+            {categories.map((category) => {
+              const active = selectedCategory === category;
+              return (
+                <motion.button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap transition-colors duration-200 ${
+                    active
+                      ? "bg-neon-pink text-foreground"
+                      : "bg-slate-gray text-muted-foreground"
+                  }`}
+                  whileTap={{ scale: 0.82 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 22 }}
                 >
-                  {category}
-                </motion.span>
-              </motion.button>
-            );
-          })}
+                  <motion.span
+                    animate={active ? { scale: [0.88, 1.14, 1] } : {}}
+                    transition={{ type: "tween", duration: 0.22, ease: "easeOut" }}
+                    style={{ display: "block" }}
+                  >
+                    {category}
+                  </motion.span>
+                </motion.button>
+              );
+            })}
+          </div>
+          {/* Scroll hint */}
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 flex items-center pr-1 bg-gradient-to-l from-deep-bg via-deep-bg/60 to-transparent w-10">
+            <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" strokeWidth={2.5} />
+          </div>
         </div>
       </div>
 
@@ -131,7 +163,7 @@ export function Schedule() {
           <div className="text-center py-16">
             <p className="text-2xl mb-3">🎤</p>
             <p className="text-muted-foreground font-semibold">No performances listed yet</p>
-            <p className="text-xs text-muted-foreground mt-1 opacity-60">CONNECT OUR DATABASE TO POPULATE!</p>
+            <p className="text-xs text-muted-foreground mt-1 opacity-60">Connect your database to populate the lineup</p>
           </div>
         ) : (
           filteredSchedule.map((show) => {
