@@ -140,7 +140,7 @@ function timeAgo(iso: string) {
   return `${Math.floor(seconds / 86400)} days ago`;
 }
   const w = weatherData;
-  const w = weatherData;
+
 
   return (
     <div className="min-h-screen bg-deep-bg">
