@@ -1,4 +1,5 @@
 import { Music, MapPin, Clock, Cloud, Sun, CloudRain, CloudSun } from "lucide-react";
+import { supabase } from "../../lib/supabase";
 
 // Mock weather data — replace fetchWeather() with a real API call (e.g. OpenWeatherMap)
 // GET https://api.openweathermap.org/data/2.5/forecast?q=Eindhoven&appid=YOUR_KEY&units=metric
@@ -55,16 +56,11 @@ export function Feed() {
   //          });
   //      }, []);
   // ───────────────────────────────────────────────────────────────────────────
-  const happeningNow: {
-    id: number;
-    artist: string;
-    genre: string;
-    stage: string;
-    time: string;
-    color: string;
-  }[] = [
-    // TODO: replace with Supabase fetch (see instructions above)
-  ];
+  const { data: happeningNow } = await supabase
+  .from("performances")
+  .select("*")
+  .lte("start_time", new Date().toISOString())
+  .gte("end_time",   new Date().toISOString());
 
   // ───────────────────────────────────────────────────────────────────────────
   // SUPABASE INTEGRATION — Announcements table
@@ -106,16 +102,11 @@ export function Feed() {
   //        return () => { supabase.removeChannel(channel); };
   //      }, []);
   // ───────────────────────────────────────────────────────────────────────────
-  const announcements: {
-    id: number;
-    type: string;
-    title: string;
-    message: string;
-    time: string;
-    color: string;
-  }[] = [
-    // TODO: replace with Supabase fetch (see instructions above)
-  ];
+  const { data: announcements } = await supabase
+   .from("announcements")
+   .select("*")
+   .order("created_at", { ascending: false })
+   .limit(10);
 
   const w = weatherData;
 

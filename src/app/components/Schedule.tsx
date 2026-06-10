@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Heart, MapPin, Clock, ChevronRight } from "lucide-react";
 import { motion } from "motion/react";
+import { supabase } from "../../lib/supabase";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SUPABASE INTEGRATION — performances table

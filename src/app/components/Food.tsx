@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { MapPin, Clock, Star, ChevronRight, Search, Flame } from "lucide-react";
 import { motion } from "motion/react";
+import { supabase } from "../../lib/supabase";
 
 interface FoodTruck {
   id: number;
@@ -70,9 +71,10 @@ interface FoodTruck {
 //            ))
 //        .subscribe();
 // ─────────────────────────────────────────────────────────────────────────────
-const foodTrucks: FoodTruck[] = [
-  // TODO: replace with Supabase fetch (see instructions above)
-];
+const { data: foodTrucks, error } = await supabase
+  .from("food_trucks")
+  .select("*")
+  .order("name");
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CUISINE FILTERS — update to match the categories in your food truck lineup.
