@@ -18,25 +18,6 @@ interface FoodTruck {
   popular: string;
   open: boolean;
 }
-const [foodTrucks, setFoodTrucks] = useState<FoodTruck[]>([]);
-
-useEffect(() => {
-  async function fetchFoodTrucks() {
-    const { data, error } = await supabase
-      .from("food_trucks")
-      .select("*")
-      .order("name");
-
-    if (error) console.error(error);
-    else setFoodTrucks(data.map(truck => ({
-      ...truck,
-      waitTime:   truck.wait_time,
-      priceRange: truck.price_range,
-    })));
-  }
-
-  fetchFoodTrucks();
-}, []);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SUPABASE INTEGRATION — food_trucks table
@@ -99,9 +80,28 @@ useEffect(() => {
 const cuisineFilters = ["All", "BBQ", "Vegan", "Asian", "Mexican", "Desserts"];
 
 export function Food() {
+  const [foodTrucks, setFoodTrucks] = useState<FoodTruck[]>([]);
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
   const [selectedTruck, setSelectedTruck] = useState<FoodTruck | null>(null);
+
+  useEffect(() => {
+    async function fetchFoodTrucks() {
+      const { data, error } = await supabase
+        .from("food_trucks")
+        .select("*")
+        .order("name");
+
+      if (error) console.error(error);
+      else setFoodTrucks(data.map(truck => ({
+        ...truck,
+        waitTime:   truck.wait_time,
+        priceRange: truck.price_range,
+      })));
+    }
+
+    fetchFoodTrucks();
+  }, []);
 
   const filtered = foodTrucks.filter((truck) => {
     const matchesSearch =
