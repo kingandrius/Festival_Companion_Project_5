@@ -1,8 +1,8 @@
 packages:
   - '.'
 allowBuilds:
-  '@tailwindcss/oxide': set this to true or false
-  esbuild: set this to true or false
+  '@tailwindcss/oxide': false
+  esbuild: false
 minimumReleaseAgeExclude:
   - '@supabase/auth-js@2.108.1'
   - '@supabase/functions-js@2.108.1'
