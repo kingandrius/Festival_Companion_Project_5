@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MapPin, Clock, Star, ChevronRight, Search, Flame } from "lucide-react";
 import { motion } from "motion/react";
 import { supabase } from "../../lib/supabase";
@@ -71,11 +71,25 @@ interface FoodTruck {
 //            ))
 //        .subscribe();
 // ─────────────────────────────────────────────────────────────────────────────
-const { data: foodTrucks, error } = await supabase
-  .from("food_trucks")
-  .select("*")
-  .order("name");
+const [foodTrucks, setFoodTrucks] = useState<FoodTruck[]>([]);
 
+useEffect(() => {
+  async function fetchFoodTrucks() {
+    const { data, error } = await supabase
+      .from("food_trucks")
+      .select("*")
+      .order("name");
+
+    if (error) console.error(error);
+    else setFoodTrucks(data.map(truck => ({
+      ...truck,
+      waitTime:   truck.wait_time,
+      priceRange: truck.price_range,
+    })));
+  }
+
+  fetchFoodTrucks();
+}, []);
 // ─────────────────────────────────────────────────────────────────────────────
 // CUISINE FILTERS — update to match the categories in your food truck lineup.
 // The filter logic below checks truck.cuisine and truck.tags, so make sure

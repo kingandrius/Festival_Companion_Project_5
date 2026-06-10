@@ -1,5 +1,6 @@
 import { Music, MapPin, Clock, Cloud, Sun, CloudRain, CloudSun } from "lucide-react";
 import { supabase } from "../../lib/supabase";
+import { useEffect, useState } from "react";
 
 // Mock weather data — replace fetchWeather() with a real API call (e.g. OpenWeatherMap)
 // GET https://api.openweathermap.org/data/2.5/forecast?q=Eindhoven&appid=YOUR_KEY&units=metric
@@ -56,11 +57,42 @@ export function Feed() {
   //          });
   //      }, []);
   // ───────────────────────────────────────────────────────────────────────────
-  const { data: happeningNow } = await supabase
-  .from("performances")
-  .select("*")
-  .lte("start_time", new Date().toISOString())
-  .gte("end_time",   new Date().toISOString());
+ type PerformanceNow = {
+   id: number | string;
+   artist: string;
+   genre: string;
+   stage: string;
+   time: string;
+   color: string;
+ };
+
+ const [happeningNow, setHappeningNow] = useState<PerformanceNow[]>([]);
+
+ useEffect(() => {
+  async function fetchPerformances() {
+    const { data, error } = await supabase
+      .from("performances")
+      .select("*")
+      .lte("start_time", new Date().toISOString())
+      .gte("end_time",   new Date().toISOString());
+
+    if (error) console.error(error);
+    else setHappeningNow(data.map(p => ({
+      ...p,
+      time: `${format(p.start_time)} - ${format(p.end_time)}`,
+    })));
+  }
+
+  fetchPerformances();
+}, []);
+
+function format(iso: string) {
+  return new Date(iso).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
 
   // ───────────────────────────────────────────────────────────────────────────
   // SUPABASE INTEGRATION — Announcements table
@@ -102,12 +134,48 @@ export function Feed() {
   //        return () => { supabase.removeChannel(channel); };
   //      }, []);
   // ───────────────────────────────────────────────────────────────────────────
-  const { data: announcements } = await supabase
-   .from("announcements")
-   .select("*")
-   .order("created_at", { ascending: false })
-   .limit(10);
+type Announcement = {
+  id: number | string;
+  type: string;
+  title: string;
+  message: string;
+  color: string;
+  time: string;
+};
 
+const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+
+useEffect(() => {
+  async function fetchAnnouncements() {
+    const { data, error } = await supabase
+      .from("announcements")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    if (data) {
+      setAnnouncements(data.map((a) => ({
+        ...a,
+        time: timeAgo(a.created_at),
+      })));
+    }
+  }
+
+  fetchAnnouncements();
+}, []);
+
+function timeAgo(iso: string) {
+  const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (seconds < 60)    return "Just now";
+  if (seconds < 3600)  return `${Math.floor(seconds / 60)} mins ago`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`;
+  return `${Math.floor(seconds / 86400)} days ago`;
+}
   const w = weatherData;
 
   return (
