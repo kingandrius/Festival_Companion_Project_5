@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Heart, MapPin, Clock, ChevronRight } from "lucide-react";
 import { motion } from "motion/react";
+import { supabase } from "../../lib/supabase";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SUPABASE INTEGRATION — performances table
@@ -47,7 +48,7 @@ import { motion } from "motion/react";
 //            () => { /* re-fetch here */ })
 //        .subscribe();
 // ─────────────────────────────────────────────────────────────────────────────
-const schedule: {
+const [schedule, setSchedule] = useState<{
   id: number;
   day: number;
   artist: string;
@@ -57,9 +58,7 @@ const schedule: {
   startTime: string;
   endTime: string;
   category: string;
-}[] = [
-  // TODO: replace with Supabase fetch (see instructions above)
-];
+}[]>([]);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DAYS — update labels and IDs to match your event dates.
@@ -79,6 +78,33 @@ export function Schedule() {
   const [selectedDay, setSelectedDay] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [favorites, setFavorites] = useState<number[]>([]);
+
+  useEffect(() => {
+  async function fetchPerformances() {
+    const { data, error } = await supabase
+      .from("performances")
+      .select("*")
+      .order("start_time", { ascending: true });
+
+    if (error) console.error("Failed to load performances:", error);
+    else if (data)
+      setSchedule(
+        data.map((row: any) => ({
+          id: row.id,
+          day: row.day,
+          artist: row.artist,
+          subgenre: row.subgenre,
+          stage: row.stage,
+          stageColor: row.stage_color,
+          startTime: row.start_time,
+          endTime: row.end_time,
+          category: row.category,
+        }))
+      );
+  }
+
+  fetchPerformances();
+}, []);
 
   const filteredSchedule = schedule.filter(
     (show) =>
