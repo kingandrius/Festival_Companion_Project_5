@@ -8,7 +8,6 @@ function getWeatherCode(condition: string, description: string): string {
   if (main.includes("rain")) return "rain";
   if (main.includes("clear")) return "sunny";
   if (main.includes("clouds")) {
-    // Treat "broken clouds" or "scattered clouds" as partly cloudy
     if (description.includes("broken") || description.includes("scattered")) {
       return "partly-cloudy";
     }
@@ -55,6 +54,7 @@ export function Feed() {
     error: null,
   });
 
+  // Fetch performances that are happening right now
   useEffect(() => {
     async function fetchPerformances() {
       const { data, error } = await supabase
@@ -63,17 +63,21 @@ export function Feed() {
         .lte("start_time", new Date().toISOString())
         .gte("end_time", new Date().toISOString());
 
-      if (error) console.error(error);
-      else
+      if (error) {
+        console.error(error);
+      } else if (data) {
         setHappeningNow(
           data.map((p) => ({
             ...p,
             time: `${format(p.start_time)} - ${format(p.end_time)}`,
           }))
         );
+      }
     }
 
     fetchPerformances();
+    const interval = setInterval(fetchPerformances, 30000); // refresh every 30 sec
+    return () => clearInterval(interval);
   }, []);
 
   function format(iso: string) {
@@ -86,12 +90,12 @@ export function Feed() {
 
   // Fetch real weather data
   useEffect(() => {
-    const apiKey = import.meta.env.VITE_WEATHER_API_KEY;;
+    const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
     if (!apiKey) {
       setWeather((prev) => ({
         ...prev,
         loading: false,
-        error: "API key missing. Set VITE_OPENWEATHER_API_KEY in .env",
+        error: "API key missing. Set VITE_WEATHER_API_KEY in .env",
       }));
       return;
     }
@@ -111,7 +115,7 @@ export function Feed() {
         setWeather({
           city: data.name,
           country: data.sys.country,
-          condition: description.replace(/\b\w/g, (l) => l.toUpperCase()), // Capitalize each word
+          condition: description.replace(/\b\w/g, (l) => l.toUpperCase()),
           conditionCode: code,
           tempC: Math.round(data.main.temp),
           loading: false,
@@ -128,7 +132,7 @@ export function Feed() {
       });
   }, []);
 
-  // Announcements logic (unchanged)
+  // Announcements
   type Announcement = {
     id: number | string;
     type: string;
@@ -209,7 +213,7 @@ export function Feed() {
           </div>
         </div>
 
-        {/* Weather widget - now live */}
+        {/* Weather widget */}
         <div className="max-w-screen-sm mx-auto bg-white/5 rounded-2xl px-4 py-3 flex items-center justify-between gap-3">
           {weather.loading ? (
             <div className="flex items-center gap-2 text-muted-foreground">
@@ -223,7 +227,6 @@ export function Feed() {
             </div>
           ) : (
             <>
-              {/* Left: icon + temp */}
               <div className="flex items-center gap-3 min-w-0">
                 <WeatherIcon
                   code={weather.conditionCode}
@@ -238,7 +241,6 @@ export function Feed() {
                   </p>
                 </div>
               </div>
-              {/* Right: location */}
               <div className="flex items-center gap-1 flex-shrink-0">
                 <MapPin className="w-3.5 h-3.5 text-neon-blue" />
                 <span className="text-xs text-neon-blue font-medium">
@@ -250,7 +252,7 @@ export function Feed() {
         </div>
       </header>
 
-      {/* Happening Now section (unchanged) */}
+      {/* Happening Now section */}
       <section className="px-4 pt-5 max-w-screen-sm mx-auto">
         <h2 className="text-lg mb-4 text-neon-blue font-bold tracking-wide">
           HAPPENING NOW
@@ -304,14 +306,14 @@ export function Feed() {
                     width: "45%",
                     backgroundColor: `var(--${show.color})`,
                   }}
-                ></div>
+                />
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Announcements section (unchanged) */}
+      {/* Announcements section */}
       <section className="px-4 py-6 max-w-screen-sm mx-auto">
         <h2 className="text-lg mb-4 text-neon-green font-bold tracking-wide">
           ANNOUNCEMENTS
