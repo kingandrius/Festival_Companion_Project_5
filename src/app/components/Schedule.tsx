@@ -53,10 +53,11 @@ import { supabase } from "../../lib/supabase";
 // DAYS — update labels and IDs to match your event dates.
 // ─────────────────────────────────────────────────────────────────────────────
 const days = [
-  { id: 1, label: "Friday" },
-  { id: 2, label: "Saturday" },
-  { id: 3, label: "Sunday" },
+  { id: "Friday", label: "Friday" },
+  { id: "Saturday", label: "Saturday" },
+  { id: "Sunday", label: "Sunday" },
 ];
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CATEGORIES — extend this list to match the genres in your lineup.
