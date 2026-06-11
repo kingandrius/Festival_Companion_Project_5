@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import path from 'path'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
-
+import { VitePWA } from 'vite-plugin-pwa'
 
 function figmaAssetResolver() {
   return {
@@ -19,18 +19,27 @@ function figmaAssetResolver() {
 export default defineConfig({
   plugins: [
     figmaAssetResolver(),
-    // The React and Tailwind plugins are both required for Make, even if
-    // Tailwind is not being actively used – do not remove them
     react(),
     tailwindcss(),
+    VitePWA({
+      registerType: 'autoUpdate',    // forces immediate activation
+      workbox: {
+        skipWaiting: true,           // bypass "waiting" phase
+        clientsClaim: true,          // take control of all pages
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // optional: exclude the service worker itself from caching
+        navigateFallback: 'index.html',
+      },
+      manifest: false,               // set to true if you have a manifest.json
+      devOptions: {
+        enabled: true,               // allows testing service worker in dev mode
+      },
+    }),
   ],
   resolve: {
     alias: {
-      // Alias @ to the src directory
       '@': path.resolve(__dirname, './src'),
     },
   },
-
-  // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ['**/*.svg', '**/*.csv'],
 })
