@@ -3,71 +3,18 @@ import { Heart, MapPin, Clock, ChevronRight } from "lucide-react";
 import { motion } from "motion/react";
 import { supabase } from "../../lib/supabase";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SUPABASE INTEGRATION — performances table
-// ─────────────────────────────────────────────────────────────────────────────
-//
-// 1. Make sure src/lib/supabase.ts is set up (see that file for instructions).
-//
-// 2. Add these imports at the top of this file:
-//      import { useState, useEffect } from "react";
-//      import { supabase } from "../../lib/supabase";
-//
-// 3. Inside the Schedule() component, replace the static `schedule` array
-//    declaration with the following:
-//
-//      const [schedule, setSchedule] = useState<typeof scheduleShape>([]);
-//
-//      useEffect(() => {
-//        supabase
-//          .from("performances")
-//          .select("*")
-//          .order("start_time")
-//          .then(({ data, error }) => {
-//            if (error) console.error("Failed to load performances:", error);
-//            else if (data) setSchedule(
-//              data.map((row) => ({
-//                id:         row.id,
-//                day:        row.day,
-//                artist:     row.artist,
-//                subgenre:   row.subgenre,
-//                stage:      row.stage,
-//                stageColor: row.stage_color,   // Supabase uses snake_case
-//                startTime:  row.start_time,
-//                endTime:    row.end_time,
-//                category:   row.category,
-//              }))
-//            );
-//          });
-//      }, []);
-//
-// 4. (Optional) For real-time updates when the lineup changes:
-//      supabase
-//        .channel("performances")
-//        .on("postgres_changes", { event: "*", schema: "public", table: "performances" },
-//            () => { /* re-fetch here */ })
-//        .subscribe();
-// ─────────────────────────────────────────────────────────────────────────────
-
-// ─────────────────────────────────────────────────────────────────────────────
-// DAYS — update labels and IDs to match your event dates.
-// ─────────────────────────────────────────────────────────────────────────────
 const days = [
   { id: "Friday", label: "Friday" },
   { id: "Saturday", label: "Saturday" },
   { id: "Sunday", label: "Sunday" },
 ];
 
-
-// ─────────────────────────────────────────────────────────────────────────────
-// CATEGORIES — extend this list to match the genres in your lineup.
-// ─────────────────────────────────────────────────────────────────────────────
 const categories = ["All", "Electronic", "Rock", "Hip-Hop", "R&B", "Indie", "Metal", "Jazz"];
 
 export function Schedule() {
   const [schedule, setSchedule] = useState<{
     id: number;
-    day: number;
+    day: string;
     artist: string;
     subgenre: string;
     stage: string;
@@ -77,32 +24,33 @@ export function Schedule() {
     category: string;
   }[]>([]);
 
-  const [selectedDay, setSelectedDay] = useState(1);
+  const [selectedDay, setSelectedDay] = useState<string>("Saturday");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [favorites, setFavorites] = useState<number[]>([]);
 
   useEffect(() => {
-      supabase
-        .from("performances")
-        .select("*")
-        .order("start_time")
-        .then(({ data, error }) => {
-          if (error) console.error("Failed to load performances:", error);
-          else if (data) setSchedule(
+    supabase
+      .from("performances")
+      .select("*")
+      .order("start_time")
+      .then(({ data, error }) => {
+        if (error) console.error("Failed to load performances:", error);
+        else if (data)
+          setSchedule(
             data.map((row) => ({
-              id:         row.id,
-              day:        row.day,
-              artist:     row.artist,
-              subgenre:   row.subgenre,
-              stage:      row.stage,
+              id: row.id,
+              day: row.day,
+              artist: row.artist,
+              subgenre: row.subgenre,
+              stage: row.stage,
               stageColor: row.stage_color,
-              startTime:  row.start_time,
-              endTime:    row.end_time,
-              category:   row.category,
+              startTime: row.start_time,
+              endTime: row.end_time,
+              category: row.category,
             }))
           );
-        });
-    }, []);
+      });
+  }, []);
 
   const filteredSchedule = schedule.filter(
     (show) =>
@@ -198,7 +146,6 @@ export function Schedule() {
         ) : (
           filteredSchedule.map((show) => {
             const isFavorited = favorites.includes(show.id);
-
             return (
               <div
                 key={show.id}
@@ -207,41 +154,31 @@ export function Schedule() {
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
-                    <h3 className="font-bold text-lg text-foreground mb-1">
-                      {show.artist}
-                    </h3>
+                    <h3 className="font-bold text-lg text-foreground mb-1">{show.artist}</h3>
                     <p className="text-sm text-muted-foreground">{show.subgenre}</p>
                   </div>
-
                   <button
                     onClick={() => toggleFavorite(show.id)}
                     className="p-2 rounded-lg hover:bg-slate-gray-light transition-colors active:scale-90"
                   >
                     <Heart
                       className={`w-6 h-6 ${
-                        isFavorited
-                          ? "fill-neon-pink text-neon-pink"
-                          : "text-muted-foreground"
+                        isFavorited ? "fill-neon-pink text-neon-pink" : "text-muted-foreground"
                       }`}
                       strokeWidth={2}
                     />
                   </button>
                 </div>
-
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-muted-foreground" />
                     <span className="text-sm text-foreground">
-                      {show.startTime} – {show.endTime}
+                      {new Date(show.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} – {new Date(show.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
-
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4" style={{ color: `var(--${show.stageColor})` }} />
-                    <span
-                      className="text-sm font-semibold"
-                      style={{ color: `var(--${show.stageColor})` }}
-                    >
+                    <span className="text-sm font-semibold" style={{ color: `var(--${show.stageColor})` }}>
                       {show.stage}
                     </span>
                   </div>
