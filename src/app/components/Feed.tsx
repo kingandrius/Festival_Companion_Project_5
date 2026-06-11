@@ -86,7 +86,7 @@ export function Feed() {
 
   // Fetch real weather data
   useEffect(() => {
-    const apiKey = import.meta.env.VITE_OPENWEATHER_API_KEY;
+    const apiKey = import.meta.env.VITE_WEATHER_API_KEY;;
     if (!apiKey) {
       setWeather((prev) => ({
         ...prev,
