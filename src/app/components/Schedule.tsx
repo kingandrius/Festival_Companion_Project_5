@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Heart, MapPin, Clock, ChevronRight } from "lucide-react";
 import { motion } from "motion/react";
+import { supabase } from "../../lib/supabase";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SUPABASE INTEGRATION — performances table
@@ -47,19 +48,6 @@ import { motion } from "motion/react";
 //            () => { /* re-fetch here */ })
 //        .subscribe();
 // ─────────────────────────────────────────────────────────────────────────────
-const schedule: {
-  id: number;
-  day: number;
-  artist: string;
-  subgenre: string;
-  stage: string;
-  stageColor: string;
-  startTime: string;
-  endTime: string;
-  category: string;
-}[] = [
-  // TODO: replace with Supabase fetch (see instructions above)
-];
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DAYS — update labels and IDs to match your event dates.
@@ -76,9 +64,44 @@ const days = [
 const categories = ["All", "Electronic", "Rock", "Hip-Hop", "R&B", "Indie", "Metal", "Jazz"];
 
 export function Schedule() {
+  const [schedule, setSchedule] = useState<{
+    id: number;
+    day: number;
+    artist: string;
+    subgenre: string;
+    stage: string;
+    stageColor: string;
+    startTime: string;
+    endTime: string;
+    category: string;
+  }[]>([]);
+
   const [selectedDay, setSelectedDay] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [favorites, setFavorites] = useState<number[]>([]);
+
+  useEffect(() => {
+      supabase
+        .from("performances")
+        .select("*")
+        .order("start_time")
+        .then(({ data, error }) => {
+          if (error) console.error("Failed to load performances:", error);
+          else if (data) setSchedule(
+            data.map((row) => ({
+              id:         row.id,
+              day:        row.day,
+              artist:     row.artist,
+              subgenre:   row.subgenre,
+              stage:      row.stage,
+              stageColor: row.stage_color,
+              startTime:  row.start_time,
+              endTime:    row.end_time,
+              category:   row.category,
+            }))
+          );
+        });
+    }, []);
 
   const filteredSchedule = schedule.filter(
     (show) =>
