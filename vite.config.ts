@@ -22,17 +22,38 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate',    // forces immediate activation
+      registerType: 'autoUpdate',
       workbox: {
-        skipWaiting: true,           // bypass "waiting" phase
-        clientsClaim: true,          // take control of all pages
+        skipWaiting: true,
+        clientsClaim: true,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        // optional: exclude the service worker itself from caching
         navigateFallback: 'index.html',
+        // Add runtime caching for Supabase API calls
+        runtimeCaching: [
+          {
+            // Match all requests to your Supabase project
+            urlPattern: ({ url }) => {
+              // Replace with your actual Supabase URL if different
+              return url.hostname === 'fedgwfuhrvwxpaqewjm.supabase.co'
+            },
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'supabase-api-cache',
+              networkTimeoutSeconds: 5,
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 // 1 day
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          }
+        ]
       },
-      manifest: false,               // set to true if you have a manifest.json
+      manifest: false,
       devOptions: {
-        enabled: true,               // allows testing service worker in dev mode
+        enabled: true,
       },
     }),
   ],
