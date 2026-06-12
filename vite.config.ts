@@ -30,45 +30,30 @@ export default defineConfig({
         navigateFallback: 'index.html',
         runtimeCaching: [
           {
-            // Match any URL that contains your Supabase project ID or hostname
-            urlPattern: /^https:\/\/fedgwfuhrvwxpaqewjm\.supabase\.co\/rest\/v1\/.*$/,
-            handler: 'NetworkFirst',
+            // Cache Supabase API responses (GET requests)
+            urlPattern: ({ url }) => url.hostname === 'fedgwfuhrvwxpaqewjm.supabase.co',
+            handler: 'CacheFirst',   // ✅ serves from cache instantly when offline
             options: {
               cacheName: 'supabase-api-cache',
-              networkTimeoutSeconds: 10,
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 // 24 hours
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              }
-            }
-          },
-          // Also cache any other Supabase endpoints (e.g., storage)
-          {
-            urlPattern: /^https:\/\/fedgwfuhrvwxpaqewjm\.supabase\.co\/.*$/,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'supabase-other-cache',
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24
-              }
+                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
+              },
+              cacheableResponse: { statuses: [0, 200] }
             }
           }
         ]
       },
-      manifest: false,
-      devOptions: {
-        enabled: true,
+      // 👇 Add this: pre‑cache specific API endpoints during installation
+      injectManifest: {
+        injectionPoint: 'self.__WB_MANIFEST'
       },
+      manifest: false,
+      devOptions: { enabled: true }
     }),
   ],
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
+    alias: { '@': path.resolve(__dirname, './src') }
   },
-  assetsInclude: ['**/*.svg', '**/*.csv'],
+  assetsInclude: ['**/*.svg', '**/*.csv']
 })
