@@ -57,7 +57,7 @@ export function AIAssistant() {
     const aiResponse: Message = {
       id: messages.length + 2,
       sender: "ai",
-      text: "Shut the fuck up and don't ask me any questions, buddy.",
+      text: "Not integrated yet!",
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
