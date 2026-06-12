@@ -39,8 +39,12 @@ interface FoodTruck {
   open: boolean;
 }
 
+function getCurrentTime() {
+  return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
 export function AIAssistant() {
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState([
     {
       id: 1,
       sender: "ai",
@@ -50,64 +54,103 @@ export function AIAssistant() {
   ]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [client, setClient] = useState<Groq | null>(null);
-  const [scheduleContext, setScheduleContext] = useState<string>("");
-  const [foodTruckContext, setFoodTruckContext] = useState<string>("");
+  const messagesEndRef = useRef(null);
+  const [client, setClient] = useState(null);
+  const [scheduleContext, setScheduleContext] = useState("");
+  const [foodTruckContext, setFoodTruckContext] = useState("");
 
-  // Fetch schedule data
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  useEffect(() => {
+    const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+    if (!apiKey) {
+      console.error("Groq API key missing.");
+      return;
+    }
+    setClient(new Groq({ apiKey, dangerouslyAllowBrowser: true }));
+  }, []);
+
   useEffect(() => {
     const fetchSchedule = async () => {
       const { data, error } = await supabase
-        .from("schedule")
-        .select("*");
+        .from("performances")
+        .select("*")
+        .order("day")
+        .order("start_time");
       if (error) {
-        console.error("❌ Failed to fetch schedule:", error.message);
+        console.error("Failed to fetch schedule:", error.message);
         return;
       }
       const formatted = data
-        .map(
-          (s) =>
-            `- ${s.artist} (${s.genre}) at ${s.stage} - ${s.start_time} to ${s.end_time}`
-        )
+        .map((p) => {
+          const start = new Date(p.start_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+          const end = new Date(p.end_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+          return `- ${p.day} | ${p.stage} | ${start} - ${end} | ${p.artist} (${p.genre}/${p.subgenre}) [${p.category}]`;
+        })
         .join("\n");
       setScheduleContext(formatted);
-      console.log("✅ Schedule loaded from Supabase");
     };
     fetchSchedule();
   }, []);
 
-  // Fetch food truck data
   useEffect(() => {
     const fetchFoodTrucks = async () => {
       const { data, error } = await supabase
         .from("food_trucks")
         .select("*");
       if (error) {
-        console.error("❌ Failed to fetch food trucks:", error.message);
+        console.error("Failed to fetch food trucks:", error.message);
         return;
       }
       const formatted = data
-        .map(
-          (f) =>
-            `- ${f.name} (${f.cuisine}) at ${f.location} - Price: ${f.price_range}, Rating: ${f.rating}/5, Emoji: ${f.emoji}`
+        .map((f) =>
+          `- ${f.name} (${f.cuisine}) at ${f.location} - Price: ${f.price_range}, Rating: ${f.rating}/5${f.open ? "" : " [CLOSED]"}`
         )
         .join("\n");
       setFoodTruckContext(formatted);
-      console.log("✅ Food trucks loaded from Supabase");
     };
     fetchFoodTrucks();
   }, []);
 
-  const systemPrompt = `You are a helpful Festival AI Guide. Help users with questions about artists, schedules, stages, food stalls, and recommendations.  
-  Here is the full festival schedule:
-  ${scheduleContext || "Schedule not available yet."}
-  Here are the food truck details:
-  ${foodTruckContext || "Food truck data not available yet."}`;
+  const callGroq = async (userMessage, history) => {
+    if (!client) throw new Error("Groq client not initialized");
+
+    const historyMessages = history.map((msg) => ({
+      role: msg.sender === "user" ? "user" : "assistant",
+      content: msg.text,
+    }));
+
+    const systemPrompt = `You are a helpful Festival AI Guide. Help users with questions about artists, schedules, stages, food stalls, and recommendations.
+
+Here is the full festival schedule:
+${scheduleContext || "Schedule not available yet."}
+
+Here are the food truck details:
+${foodTruckContext || "Food truck data not available yet."}
+
+Use this data to answer questions accurately. Keep responses friendly and concise.`;
+
+    const response = await client.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      max_tokens: 500,
+      messages: [
+        { role: "system", content: systemPrompt },
+        ...historyMessages,
+        { role: "user", content: userMessage },
+      ],
+    });
+
+    const text = response.choices[0]?.message?.content;
+    if (!text) throw new Error("Empty response from Groq");
+    return text;
+  };
 
   const sendMessage = async () => {
-    if (inputValue.trim() === "") return;
-    const userMsg: Message = {
+    if (inputValue.trim() === "" || isLoading || !client) return;
+
+    const userMsg = {
       id: messages.length + 1,
       sender: "user",
       text: inputValue,
@@ -119,7 +162,7 @@ export function AIAssistant() {
 
     try {
       const aiText = await callGroq(inputValue, [...messages, userMsg]);
-      const aiMsg: Message = {
+      const aiMsg = {
         id: messages.length + 2,
         sender: "ai",
         text: aiText,
@@ -142,88 +185,99 @@ export function AIAssistant() {
     }
   };
 
-  const callGroq = async (input: string, history: Message[]): Promise<string> => {
-    // Replace with actual Groq integration
-    return "This is a placeholder response from the AI.";
-  };
-
-  const getCurrentTime = (): string => {
-    return new Date().toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
   return (
     <div className="h-screen bg-deep-bg flex flex-col">
       <header
         className="px-4 py-4 sticky top-0 z-10 border-b"
         style={{
-          background:
-            "linear-gradient(to bottom, rgba(157,78,221,0.13), rgba(26,26,36,0) 100%), var(--slate-gray)",
+          background: "linear-gradient(to bottom, rgba(157,78,221,0.13), rgba(26,26,36,0) 100%), var(--slate-gray)",
           borderBottomColor: "rgba(157,78,221,0.3)",
           boxShadow: "0 4px 24px -4px rgba(157,78,221,0.15)",
         }}
       >
         <div className="flex items-center gap-3 max-w-screen-sm mx-auto">
           <div className="p-2 bg-neon-purple rounded-full">
-            <Bot size={24} color="white" />
+            <Bot className="w-6 h-6 text-deep-bg" strokeWidth={2.5} />
           </div>
-          <h1 className="text-xl font-bold text-white">Festival AI Guide</h1>
+          <h1
+            className="text-xl text-neon-purple font-bold tracking-wider"
+            style={{ textShadow: "0 0 12px rgba(157,78,221,0.7), 0 0 30px rgba(157,78,221,0.3)" }}
+          >
+            AI FESTIVAL GUIDE
+          </h1>
         </div>
       </header>
 
-      <main className="flex-1 overflow-y-auto p-4">
-        <div className="space-y-4">
-          {messages.map((msg) => (
+      <div className="flex-1 overflow-y-auto px-4 py-6 pb-28 max-w-screen-sm mx-auto w-full space-y-4">
+        {messages.map((message) => (
+          <div
+            key={message.id}
+            className={`flex gap-3 ${message.sender === "user" ? "flex-row-reverse" : "flex-row"}`}
+          >
             <div
-              key={msg.id}
-              className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
+              className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
+                message.sender === "user" ? "bg-neon-blue" : "bg-neon-purple"
+              }`}
             >
+              {message.sender === "user" ? (
+                <User className="w-5 h-5 text-deep-bg" />
+              ) : (
+                <Bot className="w-5 h-5 text-deep-bg" />
+              )}
+            </div>
+            <div className={`flex-1 max-w-[75%] ${message.sender === "user" ? "items-end" : "items-start"}`}>
               <div
-                className={`max-w-xs md:max-w-md px-4 py-2 rounded-lg ${
-                  msg.sender === "user"
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-700 text-white"
+                className={`rounded-2xl px-4 py-3 ${
+                  message.sender === "user"
+                    ? "bg-neon-blue text-deep-bg rounded-tr-sm"
+                    : "bg-slate-gray text-foreground border border-slate-gray-light rounded-tl-sm"
                 }`}
               >
-                {msg.text}
-                <div className="text-xs text-right mt-1 opacity-70">
-                  {msg.timestamp}
-                </div>
+                <p className="leading-relaxed whitespace-pre-wrap">{message.text}</p>
               </div>
+              <span className="text-xs text-muted-foreground mt-1 px-2 block">{message.timestamp}</span>
             </div>
-          ))}
-          {isLoading && (
-            <div className="flex justify-start">
-              <div className="max-w-xs md:max-w-md px-4 py-2 rounded-lg bg-gray-700 text-white">
-                <Loader2 className="animate-spin" size={20} />
-              </div>
+          </div>
+        ))}
+        {isLoading && (
+          <div className="flex gap-3">
+            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-neon-purple flex items-center justify-center">
+              <Loader2 className="w-5 h-5 text-deep-bg animate-spin" />
             </div>
-          )}
-        </div>
+            <div className="bg-slate-gray rounded-2xl px-4 py-3 border border-slate-gray-light">
+              <p className="text-muted-foreground">Thinking...</p>
+            </div>
+          </div>
+        )}
         <div ref={messagesEndRef} />
-      </main>
+      </div>
 
-      <footer className="p-4 border-t">
-        <div className="max-w-screen-sm mx-auto flex gap-2">
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            className="flex-1 px-4 py-2 rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Ask me anything..."
-            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-          />
-          <button
-            onClick={sendMessage}
-            disabled={isLoading}
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center justify-center disabled:opacity-50"
-          >
-            <Send size={20} />
-          </button>
+      <div className="fixed bottom-20 left-0 right-0 z-10 bg-deep-bg border-t border-slate-gray-light px-4 py-4">
+        <div className="max-w-screen-sm mx-auto">
+          <div className="flex gap-2 items-end">
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              placeholder="Ask about artists, food, or directions..."
+              className="flex-1 bg-slate-gray border border-slate-gray-light rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-neon-blue focus:border-transparent"
+              disabled={isLoading}
+            />
+            <button
+              onClick={sendMessage}
+              disabled={!inputValue.trim() || isLoading}
+              className="bg-neon-blue p-3 rounded-xl transition-all active:scale-95 disabled:opacity-50"
+            >
+              {isLoading ? (
+                <Loader2 className="w-6 h-6 text-deep-bg animate-spin" />
+              ) : (
+                <Send className="w-6 h-6 text-deep-bg" />
+              )}
+            </button>
+          </div>
         </div>
-      </footer>
+      </div>
     </div>
   );
 }
