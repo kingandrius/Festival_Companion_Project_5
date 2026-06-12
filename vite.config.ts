@@ -28,24 +28,32 @@ export default defineConfig({
         clientsClaim: true,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         navigateFallback: 'index.html',
-        // Add runtime caching for Supabase API calls
         runtimeCaching: [
           {
-            // Match all requests to your Supabase project
-            urlPattern: ({ url }) => {
-              // Replace with your actual Supabase URL if different
-              return url.hostname === 'fedgwfuhrvwxpaqewjm.supabase.co'
-            },
+            // Match any URL that contains your Supabase project ID or hostname
+            urlPattern: /^https:\/\/fedgwfuhrvwxpaqewjm\.supabase\.co\/rest\/v1\/.*$/,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'supabase-api-cache',
-              networkTimeoutSeconds: 5,
+              networkTimeoutSeconds: 10,
               expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 // 1 day
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 // 24 hours
               },
               cacheableResponse: {
                 statuses: [0, 200]
+              }
+            }
+          },
+          // Also cache any other Supabase endpoints (e.g., storage)
+          {
+            urlPattern: /^https:\/\/fedgwfuhrvwxpaqewjm\.supabase\.co\/.*$/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'supabase-other-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24
               }
             }
           }
