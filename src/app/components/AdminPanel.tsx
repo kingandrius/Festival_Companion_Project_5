@@ -16,10 +16,6 @@ const STAGE_OPTIONS = ["Main Stage", "Second Stage", "Third Stage", "Tent Stage"
 const DAY_OPTIONS = ["Friday", "Saturday", "Sunday"];
 const GENRE_OPTIONS = ["Electronic", "Hip-Hop", "Rock", "Pop", "Jazz", "Techno", "House", "Other"];
 
-function getCurrentTime() {
-  return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-}
-
 function Section({ title, children }) {
   const [open, setOpen] = useState(true);
   return (
@@ -70,6 +66,11 @@ export function AdminPanel() {
   const [waitTimes, setWaitTimes] = useState({});
   const [foodFeedback, setFoodFeedback] = useState("");
 
+  // Weather city state
+  const [weatherCity, setWeatherCity] = useState("");
+  const [weatherCityInput, setWeatherCityInput] = useState("");
+  const [weatherCityFeedback, setWeatherCityFeedback] = useState("");
+
   const handleLogin = () => {
     if (username === ADMIN_USER && password === ADMIN_PASS) {
       setLoggedIn(true);
@@ -85,6 +86,7 @@ export function AdminPanel() {
     fetchAnnouncements();
     fetchPerformances();
     fetchFoodTrucks();
+    fetchWeatherCity();
   }, [loggedIn]);
 
   // --- Announcements ---
@@ -130,11 +132,7 @@ export function AdminPanel() {
     }
     setPerfPosting(true);
     const { error } = await supabase.from("performances").insert([{
-      artist,
-      genre,
-      subgenre,
-      stage,
-      day,
+      artist, genre, subgenre, stage, day,
       start_time: startTime,
       end_time: endTime,
       color: perfColor,
@@ -180,6 +178,27 @@ export function AdminPanel() {
     await supabase.from("food_trucks").update({ wait_time: waitTimes[id] }).eq("id", id);
     setFoodFeedback("Wait time updated!");
     setTimeout(() => setFoodFeedback(""), 2000);
+  };
+
+  // --- Weather City ---
+  const fetchWeatherCity = async () => {
+    const { data } = await supabase.from("settings").select("weather_city").eq("id", 1).single();
+    if (data) {
+      setWeatherCity(data.weather_city);
+      setWeatherCityInput(data.weather_city);
+    }
+  };
+
+  const saveWeatherCity = async () => {
+    if (!weatherCityInput.trim()) return;
+    const { error } = await supabase.from("settings").update({ weather_city: weatherCityInput }).eq("id", 1);
+    if (error) {
+      setWeatherCityFeedback("Failed: " + error.message);
+    } else {
+      setWeatherCity(weatherCityInput);
+      setWeatherCityFeedback("City updated!");
+    }
+    setTimeout(() => setWeatherCityFeedback(""), 3000);
   };
 
   const inputClass = "w-full bg-deep-bg border border-slate-gray-light rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-neon-purple";
@@ -345,6 +364,30 @@ export function AdminPanel() {
               </div>
             </div>
           ))}
+        </Section>
+
+        {/* Weather City */}
+        <Section title="🌤️ WEATHER CITY">
+          <p className="text-sm text-muted-foreground">
+            Currently showing: <span className="text-foreground font-bold">{weatherCity || "Loading..."}</span>
+          </p>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Enter city name (e.g. Amsterdam)"
+              value={weatherCityInput}
+              onChange={(e) => setWeatherCityInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && saveWeatherCity()}
+              className={inputClass + " flex-1"}
+            />
+            <button
+              onClick={saveWeatherCity}
+              className="px-4 py-3 bg-neon-blue text-deep-bg font-bold rounded-xl active:scale-95 whitespace-nowrap"
+            >
+              Save
+            </button>
+          </div>
+          {weatherCityFeedback && <p className="text-sm text-neon-green">{weatherCityFeedback}</p>}
         </Section>
 
       </div>
