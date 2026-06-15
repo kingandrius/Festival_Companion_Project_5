@@ -10,38 +10,24 @@ interface Message {
   timestamp: string;
 }
 
-interface Performance {
-  id: number;
-  artist: string;
-  subgenre: string;
-  genre: string;
-  stage: string;
-  stage_color: string;
-  start_time: string;
-  end_time: string;
-  day: string;
-  category: string;
-  color: string;
-}
-
-interface FoodTruck {
-  id: number;
-  name: string;
-  cuisine: string;
-  description: string;
-  location: string;
-  wait_time: string | null;
-  rating: number;
-  price_range: string;
-  tags: string[];
-  emoji: string;
-  popular: string;
-  open: boolean;
-}
-
 function getCurrentTime() {
   return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
+
+const MAP_CONTEXT = `
+Festival grounds layout:
+- Main Stage: biggest stage, headliner performances all weekend. Located top-centre of the grounds.
+- Digital Arena: electronic music, cutting-edge sound and laser visuals. Located right side of the grounds.
+- Neon Tent: intimate tent stage for emerging artists and late-night DJ sets. Located left side of the grounds.
+- Rock Arena: open-air arena for rock and metal performances. Located bottom-centre of the grounds.
+- Food Court Zone A: international food trucks, vegan options, gourmet street food. Located centre of the grounds. Wait time: 5-10 mins.
+- Food Court Zone B: quick bites right next to Main Stage. Located top-left of the grounds. Wait time: 3-7 mins.
+- First Aid Station: medical assistance and emergency services available 24/7. Located bottom-right near entrance.
+- Locker Zone: secure storage for belongings, phone charging available. Located bottom-left near entrance.
+- Toilets 1: west side of the grounds, near the Neon Tent.
+- Toilets 2: east side of the grounds, near the Digital Arena.
+- Entrance: bottom-centre of the grounds. Parking A on the left, Parking B on the right.
+`.trim();
 
 export function AIAssistant() {
   const [messages, setMessages] = useState([
@@ -122,7 +108,7 @@ export function AIAssistant() {
       content: msg.text,
     }));
 
-    const systemPrompt = `You are a helpful Festival AI Guide. Help users with questions about artists, schedules, stages, food stalls, and recommendations.
+    const systemPrompt = `You are a helpful Festival AI Guide. Help users with questions about artists, schedules, stages, food stalls, directions, and recommendations.
 
 Here is the full festival schedule:
 ${scheduleContext || "Schedule not available yet."}
@@ -130,7 +116,10 @@ ${scheduleContext || "Schedule not available yet."}
 Here are the food truck details:
 ${foodTruckContext || "Food truck data not available yet."}
 
-Use this data to answer questions accurately. Keep responses friendly and concise.`;
+Here is the festival map and locations:
+${MAP_CONTEXT}
+
+Use this data to answer questions accurately. When asked about directions or where something is, refer to the map locations. Keep responses friendly and concise.`;
 
     const response = await client.chat.completions.create({
       model: "llama-3.3-70b-versatile",
