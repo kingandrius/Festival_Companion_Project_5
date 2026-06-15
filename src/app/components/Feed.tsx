@@ -2,7 +2,6 @@ import { Music, MapPin, Clock, Cloud, Sun, CloudRain, CloudSun } from "lucide-re
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 
-// Weather icon mapping based on OpenWeatherMap condition
 function getWeatherCode(condition: string, description: string): string {
   const main = condition.toLowerCase();
   if (main.includes("rain")) return "rain";
@@ -34,8 +33,8 @@ export function Feed() {
   };
 
   const [happeningNow, setHappeningNow] = useState<PerformanceNow[]>([]);
+  const [isLive, setIsLive] = useState(false);
 
-  // Weather state
   const [weather, setWeather] = useState<{
     city: string;
     country: string;
@@ -54,32 +53,6 @@ export function Feed() {
     error: null,
   });
 
-  // Fetch performances that are happening right now
-  useEffect(() => {
-    async function fetchPerformances() {
-      const { data, error } = await supabase
-        .from("performances")
-        .select("*")
-        .lte("start_time", new Date().toISOString())
-        .gte("end_time", new Date().toISOString());
-
-      if (error) {
-        console.error(error);
-      } else if (data) {
-        setHappeningNow(
-          data.map((p) => ({
-            ...p,
-            time: `${format(p.start_time)} - ${format(p.end_time)}`,
-          }))
-        );
-      }
-    }
-
-    fetchPerformances();
-    const interval = setInterval(fetchPerformances, 30000); // refresh every 30 sec
-    return () => clearInterval(interval);
-  }, []);
-
   function format(iso: string) {
     return new Date(iso).toLocaleTimeString("en-US", {
       hour: "numeric",
@@ -88,7 +61,63 @@ export function Feed() {
     });
   }
 
-  // Fetch real weather data
+  useEffect(() => {
+    async function fetchPerformances() {
+      const now = new Date().toISOString();
+
+      // First try: what's happening right now
+      const { data: nowData, error: nowError } = await supabase
+        .from("performances")
+        .select("*")
+        .lte("start_time", now)
+        .gte("end_time", now);
+
+      if (nowError) {
+        console.error(nowError);
+        return;
+      }
+
+      // If something is live, show it
+      if (nowData && nowData.length > 0) {
+        setIsLive(true);
+        setHappeningNow(
+          nowData.map((p) => ({
+            ...p,
+            time: `${format(p.start_time)} - ${format(p.end_time)}`,
+          }))
+        );
+        return;
+      }
+
+      // Fallback: show the next 3 upcoming performances
+      const { data: upcomingData, error: upcomingError } = await supabase
+        .from("performances")
+        .select("*")
+        .gt("start_time", now)
+        .order("start_time", { ascending: true })
+        .limit(3);
+
+      if (upcomingError) {
+        console.error(upcomingError);
+        return;
+      }
+
+      setIsLive(false);
+      if (upcomingData && upcomingData.length > 0) {
+        setHappeningNow(
+          upcomingData.map((p) => ({
+            ...p,
+            time: `${format(p.start_time)} - ${format(p.end_time)}`,
+          }))
+        );
+      }
+    }
+
+    fetchPerformances();
+    const interval = setInterval(fetchPerformances, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
     if (!apiKey) {
@@ -115,7 +144,7 @@ export function Feed() {
         setWeather({
           city: data.name,
           country: data.sys.country,
-          condition: description.replace(/\b\w/g, (l) => l.toUpperCase()),
+          condition: description.replace(/\b\w/g, (l: string) => l.toUpperCase()),
           conditionCode: code,
           tempC: Math.round(data.main.temp),
           loading: false,
@@ -132,7 +161,6 @@ export function Feed() {
       });
   }, []);
 
-  // Announcements
   type Announcement = {
     id: number | string;
     type: string;
@@ -195,16 +223,14 @@ export function Feed() {
             <h1
               className="text-xl tracking-wider text-neon-blue font-bold"
               style={{
-                textShadow:
-                  "0 0 12px rgba(0,217,255,0.7), 0 0 30px rgba(0,217,255,0.3)",
+                textShadow: "0 0 12px rgba(0,217,255,0.7), 0 0 30px rgba(0,217,255,0.3)",
               }}
             >
               FESTIVAL
               <span
                 className="text-neon-pink"
                 style={{
-                  textShadow:
-                    "0 0 12px rgba(255,20,147,0.7), 0 0 30px rgba(255,20,147,0.3)",
+                  textShadow: "0 0 12px rgba(255,20,147,0.7), 0 0 30px rgba(255,20,147,0.3)",
                 }}
               >
                 BUDDY
@@ -236,9 +262,7 @@ export function Feed() {
                   <span className="text-2xl font-bold text-foreground">
                     {weather.tempC}°C
                   </span>
-                  <p className="text-sm text-neon-pink truncate">
-                    {weather.condition}
-                  </p>
+                  <p className="text-sm text-neon-pink truncate">{weather.condition}</p>
                 </div>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
@@ -252,17 +276,17 @@ export function Feed() {
         </div>
       </header>
 
-      {/* Happening Now section */}
+      {/* Happening Now / Up Next section */}
       <section className="px-4 pt-5 max-w-screen-sm mx-auto">
         <h2 className="text-lg mb-4 text-neon-blue font-bold tracking-wide">
-          HAPPENING NOW
+          {isLive ? "HAPPENING NOW" : "UP NEXT"}
         </h2>
 
         <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide snap-x snap-mandatory">
           {happeningNow.length === 0 && (
             <div className="w-full py-6 text-center">
               <p className="text-muted-foreground text-sm">
-                No performances on right now
+                No performances scheduled
               </p>
             </div>
           )}
@@ -322,9 +346,7 @@ export function Feed() {
         <div className="space-y-3">
           {announcements.length === 0 && (
             <div className="py-6 text-center">
-              <p className="text-muted-foreground text-sm">
-                No announcements yet
-              </p>
+              <p className="text-muted-foreground text-sm">No announcements yet</p>
             </div>
           )}
           {announcements.map((announcement) => (
@@ -334,9 +356,7 @@ export function Feed() {
               style={{ borderLeftColor: `var(--${announcement.color})` }}
             >
               <div className="flex items-start justify-between mb-2">
-                <h3 className="font-bold text-foreground">
-                  {announcement.title}
-                </h3>
+                <h3 className="font-bold text-foreground">{announcement.title}</h3>
                 <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
                   {announcement.time}
                 </span>
