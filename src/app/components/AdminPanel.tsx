@@ -22,7 +22,7 @@ const stageColorMap: Record<string, string> = {
   "Main Stage": "neon-blue",
   "Digital Arena": "neon-green",
   "Neon Tent": "neon-pink",
-  "Rock Arena": "neon-purple",
+  "Rock Arena": "neon-yellow",   // was 'neon-purple' – now valid
 };
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
