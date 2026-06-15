@@ -79,24 +79,35 @@ export function Feed() {
     fetchSettings();
   }, []);
 
+  // UPDATED fetchPerformances with earliest fallback
   useEffect(() => {
     async function fetchPerformances() {
       const now = new Date().toISOString();
 
+      // 1. Live now
       const { data: nowData, error: nowError } = await supabase
         .from("performances")
         .select("*")
         .lte("start_time", now)
         .gte("end_time", now);
 
-      if (nowError) { console.error(nowError); return; }
-
-      if (nowData && nowData.length > 0) {
-        setIsLive(true);
-        setHappeningNow(nowData.map((p) => ({ ...p, time: `${format(p.start_time)} - ${format(p.end_time)}` })));
+      if (nowError) {
+        console.error(nowError);
         return;
       }
 
+      if (nowData && nowData.length > 0) {
+        setIsLive(true);
+        setHappeningNow(
+          nowData.map((p) => ({
+            ...p,
+            time: `${format(p.start_time)} - ${format(p.end_time)}`,
+          }))
+        );
+        return;
+      }
+
+      // 2. Upcoming (future)
       const { data: upcomingData, error: upcomingError } = await supabase
         .from("performances")
         .select("*")
@@ -104,11 +115,45 @@ export function Feed() {
         .order("start_time", { ascending: true })
         .limit(3);
 
-      if (upcomingError) { console.error(upcomingError); return; }
+      if (upcomingError) {
+        console.error(upcomingError);
+        return;
+      }
 
-      setIsLive(false);
       if (upcomingData && upcomingData.length > 0) {
-        setHappeningNow(upcomingData.map((p) => ({ ...p, time: `${format(p.start_time)} - ${format(p.end_time)}` })));
+        setIsLive(false);
+        setHappeningNow(
+          upcomingData.map((p) => ({
+            ...p,
+            time: `${format(p.start_time)} - ${format(p.end_time)}`,
+          }))
+        );
+        return;
+      }
+
+      // 3. No live, no future → show earliest performances (e.g., Friday's openers)
+      const { data: earliestData, error: earliestError } = await supabase
+        .from("performances")
+        .select("*")
+        .order("start_time", { ascending: true })
+        .limit(3);
+
+      if (earliestError) {
+        console.error(earliestError);
+        setHappeningNow([]);
+        return;
+      }
+
+      if (earliestData && earliestData.length > 0) {
+        setIsLive(false);
+        setHappeningNow(
+          earliestData.map((p) => ({
+            ...p,
+            time: `${format(p.start_time)} - ${format(p.end_time)}`,
+          }))
+        );
+      } else {
+        setHappeningNow([]);
       }
     }
 
