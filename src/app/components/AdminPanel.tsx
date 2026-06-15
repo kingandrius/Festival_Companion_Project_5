@@ -12,11 +12,20 @@ const COLOR_OPTIONS = [
   { label: "Green", value: "neon-green" },
 ];
 
-const STAGE_OPTIONS = ["Main Stage", "Second Stage", "Third Stage", "Tent Stage"];
+// Updated stage list to match the actual festival stages from Map.tsx
+const STAGE_OPTIONS = ["Main Stage", "Digital Arena", "Neon Tent", "Rock Arena"];
 const DAY_OPTIONS = ["Friday", "Saturday", "Sunday"];
 const GENRE_OPTIONS = ["Electronic", "Hip-Hop", "Rock", "Pop", "Jazz", "Techno", "House", "Other"];
 
-function Section({ title, children }) {
+// Map each stage to a fixed neon color (CSS variables must exist)
+const stageColorMap: Record<string, string> = {
+  "Main Stage": "neon-blue",
+  "Digital Arena": "neon-green",
+  "Neon Tent": "neon-pink",
+  "Rock Arena": "neon-purple",
+};
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(true);
   return (
     <div className="bg-slate-gray rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(157,78,221,0.3)" }}>
@@ -55,7 +64,6 @@ export function AdminPanel() {
   const [day, setDay] = useState("Friday");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
-  const [perfColor, setPerfColor] = useState("neon-blue");
   const [perfCategory, setPerfCategory] = useState("music");
   const [perfPosting, setPerfPosting] = useState(false);
   const [perfFeedback, setPerfFeedback] = useState("");
@@ -114,7 +122,7 @@ export function AdminPanel() {
     setTimeout(() => setAnnFeedback(""), 3000);
   };
 
-  const deleteAnnouncement = async (id) => {
+  const deleteAnnouncement = async (id: number) => {
     await supabase.from("announcements").delete().eq("id", id);
     fetchAnnouncements();
   };
@@ -130,14 +138,15 @@ export function AdminPanel() {
       setPerfFeedback("Please fill in artist, start time and end time.");
       return;
     }
+    const assignedColor = stageColorMap[stage] || "neon-blue"; // fallback
     setPerfPosting(true);
     const { error } = await supabase.from("performances").insert([{
       artist, genre, subgenre, stage, day,
       start_time: startTime,
       end_time: endTime,
-      color: perfColor,
+      color: assignedColor,
       category: perfCategory,
-      stage_color: perfColor,
+      stage_color: assignedColor,
     }]);
     if (error) {
       setPerfFeedback("Failed: " + error.message);
@@ -153,7 +162,7 @@ export function AdminPanel() {
     setTimeout(() => setPerfFeedback(""), 3000);
   };
 
-  const deletePerformance = async (id) => {
+  const deletePerformance = async (id: number) => {
     await supabase.from("performances").delete().eq("id", id);
     fetchPerformances();
   };
@@ -169,12 +178,12 @@ export function AdminPanel() {
     }
   };
 
-  const toggleFoodTruck = async (id, currentOpen) => {
+  const toggleFoodTruck = async (id: number, currentOpen: boolean) => {
     await supabase.from("food_trucks").update({ open: !currentOpen }).eq("id", id);
     fetchFoodTrucks();
   };
 
-  const updateWaitTime = async (id) => {
+  const updateWaitTime = async (id: number) => {
     await supabase.from("food_trucks").update({ wait_time: waitTimes[id] }).eq("id", id);
     setFoodFeedback("Wait time updated!");
     setTimeout(() => setFoodFeedback(""), 2000);
@@ -304,10 +313,17 @@ export function AdminPanel() {
             </div>
           </div>
           <div className="flex gap-3">
-            <select value={perfColor} onChange={(e) => setPerfColor(e.target.value)} className={selectClass + " flex-1"}>
-              {COLOR_OPTIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-            </select>
-            <input type="text" placeholder="Category (e.g. music)" value={perfCategory} onChange={(e) => setPerfCategory(e.target.value)} className={selectClass + " flex-1"} />
+            {/* Stage color is now automatic – no picker needed */}
+            <input
+              type="text"
+              placeholder="Category (e.g. music)"
+              value={perfCategory}
+              onChange={(e) => setPerfCategory(e.target.value)}
+              className={selectClass + " flex-1"}
+            />
+            <div className="flex-1 text-xs text-muted-foreground self-end pb-3">
+              Color automatically set by stage
+            </div>
           </div>
           {perfFeedback && <p className="text-sm text-neon-green">{perfFeedback}</p>}
           <button onClick={postPerformance} disabled={perfPosting} className="w-full flex items-center justify-center gap-2 bg-neon-blue text-deep-bg font-bold py-3 rounded-xl active:scale-95 disabled:opacity-50">
