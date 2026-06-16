@@ -197,7 +197,7 @@ Use this data to answer questions accurately. When asked about directions or whe
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto px-4 py-6 pb-28 max-w-screen-sm mx-auto w-full space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 py-6 max-w-screen-sm mx-auto w-full space-y-4">
         {messages.map((message) => (
           <div
             key={message.id}
@@ -241,7 +241,7 @@ Use this data to answer questions accurately. When asked about directions or whe
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="fixed bottom-20 left-0 right-0 z-10 bg-deep-bg border-t border-slate-gray-light px-4 py-4">
+      <div className="px-4 py-4 border-t border-slate-gray-light bg-deep-bg">
         <div className="max-w-screen-sm mx-auto">
           <div className="flex gap-2 items-end">
             <input
