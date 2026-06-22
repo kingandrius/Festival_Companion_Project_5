@@ -19,64 +19,6 @@ interface FoodTruck {
   open: boolean;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SUPABASE INTEGRATION — food_trucks table
-// ─────────────────────────────────────────────────────────────────────────────
-//
-// 1. Make sure src/lib/supabase.ts is set up (see that file for instructions).
-//
-// 2. Add these imports at the top of this file:
-//      import { useEffect } from "react";
-//      import { supabase } from "../../lib/supabase";
-//
-// 3. Inside the Food() component, add state and a fetch after the existing
-//    useState declarations:
-//
-//      const [foodTrucks, setFoodTrucks] = useState<FoodTruck[]>([]);
-//
-//      useEffect(() => {
-//        supabase
-//          .from("food_trucks")
-//          .select("*")
-//          .order("name")
-//          .then(({ data, error }) => {
-//            if (error) console.error("Failed to load food trucks:", error);
-//            else if (data) setFoodTrucks(
-//              data.map((row) => ({
-//                id:         row.id,
-//                name:       row.name,
-//                cuisine:    row.cuisine,
-//                description:row.description,
-//                location:   row.location,
-//                waitTime:   row.wait_time,    // Supabase uses snake_case
-//                rating:     row.rating,
-//                priceRange: row.price_range,
-//                tags:       row.tags ?? [],
-//                emoji:      row.emoji,
-//                popular:    row.popular,
-//                open:       row.open,
-//              }))
-//            );
-//          });
-//      }, []);
-//
-//    Then remove the `const foodTrucks: FoodTruck[] = []` line below,
-//    since it will be replaced by the useState above.
-//
-// 4. To update wait times in real-time (e.g. from a dashboard):
-//      supabase
-//        .channel("food_trucks")
-//        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "food_trucks" },
-//            (payload) => setFoodTrucks((prev) =>
-//              prev.map((t) => t.id === payload.new.id ? { ...t, ...payload.new } : t)
-//            ))
-//        .subscribe();
-// ─────────────────────────────────────────────────────────────────────────────
-// ─────────────────────────────────────────────────────────────────────────────
-// CUISINE FILTERS — update to match the categories in your food truck lineup.
-// The filter logic below checks truck.cuisine and truck.tags, so make sure
-// the values you use here align with your data.
-// ─────────────────────────────────────────────────────────────────────────────
 const cuisineFilters = ["All", "BBQ", "Vegan", "Asian", "Mexican", "Desserts"];
 
 export function Food() {
@@ -92,12 +34,17 @@ export function Food() {
         .select("*")
         .order("name");
 
-      if (error) console.error(error);
-      else setFoodTrucks(data.map(truck => ({
-        ...truck,
-        waitTime:   truck.wait_time,
-        priceRange: truck.price_range,
-      })));
+      if (error) {
+        console.error(error);
+      } else if (data) {
+        setFoodTrucks(
+          data.map((truck) => ({
+            ...truck,
+            waitTime: truck.wait_time,
+            priceRange: truck.price_range,
+          }))
+        );
+      }
     }
 
     fetchFoodTrucks();
@@ -110,23 +57,28 @@ export function Food() {
 
     const matchesFilter =
       activeFilter === "All" ||
-      (activeFilter === "BBQ" && truck.cuisine.includes("BBQ")) ||
-      (activeFilter === "Vegan" && truck.tags.some((t) => t.includes("Vegan") || t.includes("Plant"))) ||
+      (activeFilter === "BBQ" && truck.cuisine === "BBQ") ||
+      (activeFilter === "Vegan" &&
+        truck.tags.some((t) => t.includes("Vegan") || t.includes("Plant"))) ||
       (activeFilter === "Asian" &&
-        ["Korean", "Japanese", "Hawaiian", "Indian"].some((c) => truck.cuisine.includes(c))) ||
-      (activeFilter === "Mexican" && truck.cuisine.includes("Mexican")) ||
-      (activeFilter === "Desserts" && truck.tags.some((t) => t === "Sweet" || t === "Dessert"));
+        (truck.cuisine === "Asian" ||
+          ["Korean", "Japanese", "Hawaiian", "Indian", "Chinese", "Thai"].some((c) =>
+            truck.cuisine.includes(c)
+          ))) ||
+      (activeFilter === "Mexican" && truck.cuisine === "Mexican") ||
+      (activeFilter === "Desserts" &&
+        truck.tags.some((t) => t === "Sweet" || t === "Dessert"));
 
     return matchesSearch && matchesFilter;
   });
 
   return (
     <div className="min-h-screen bg-deep-bg">
-      {/* Header */}
       <header
         className="px-4 pt-4 pb-3 sticky top-0 z-10 border-b"
         style={{
-          background: "linear-gradient(to bottom, rgba(16,217,142,0.13), rgba(26,26,36,0) 100%), var(--slate-gray)",
+          background:
+            "linear-gradient(to bottom, rgba(16,217,142,0.13), rgba(26,26,36,0) 100%), var(--slate-gray)",
           borderBottomColor: "rgba(16,217,142,0.3)",
           boxShadow: "0 4px 24px -4px rgba(16,217,142,0.15)",
         }}
@@ -134,10 +86,17 @@ export function Food() {
         <div className="max-w-screen-sm mx-auto">
           <div className="flex items-center gap-3 mb-3">
             <span className="text-2xl">🍽️</span>
-            <h1 className="text-xl text-neon-green font-bold tracking-wider" style={{ textShadow: "0 0 12px rgba(16,217,142,0.7), 0 0 30px rgba(16,217,142,0.3)" }}>FOOD & DRINKS</h1>
+            <h1
+              className="text-xl text-neon-green font-bold tracking-wider"
+              style={{
+                textShadow:
+                  "0 0 12px rgba(16,217,142,0.7), 0 0 30px rgba(16,217,142,0.3)",
+              }}
+            >
+              FOOD & DRINKS
+            </h1>
           </div>
 
-          {/* Search */}
           <div className="relative mb-3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <input
@@ -149,7 +108,6 @@ export function Food() {
             />
           </div>
 
-          {/* Filters */}
           <div className="relative">
             <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
               {cuisineFilters.map((filter) => {
@@ -177,7 +135,6 @@ export function Food() {
                 );
               })}
             </div>
-            {/* Scroll hint */}
             <div className="pointer-events-none absolute right-0 top-0 bottom-0 flex items-center pr-1 bg-gradient-to-l from-slate-gray via-slate-gray/60 to-transparent w-10">
               <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" strokeWidth={2.5} />
             </div>
@@ -185,13 +142,14 @@ export function Food() {
         </div>
       </header>
 
-      {/* Truck list */}
       <div className="max-w-screen-sm mx-auto px-4 py-4 space-y-3 pb-24">
         {foodTrucks.length === 0 ? (
           <div className="text-center py-16">
             <p className="text-2xl mb-3">🍽️</p>
             <p className="text-muted-foreground font-semibold">No food trucks listed yet</p>
-            <p className="text-xs text-muted-foreground mt-1 opacity-60">Connect your database to populate the food guide</p>
+            <p className="text-xs text-muted-foreground mt-1 opacity-60">
+              Connect your database to populate the food guide
+            </p>
           </div>
         ) : (
           <>
@@ -209,7 +167,9 @@ export function Food() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-semibold text-foreground truncate">{truck.name}</span>
+                      <span className="font-semibold text-foreground truncate">
+                        {truck.name}
+                      </span>
                       <div className="flex items-center gap-1 flex-shrink-0">
                         <Star className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />
                         <span className="text-xs text-foreground">{truck.rating}</span>
@@ -226,7 +186,9 @@ export function Food() {
                         </>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{truck.description}</p>
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                      {truck.description}
+                    </p>
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center gap-1">
                         <MapPin className="w-3 h-3 text-muted-foreground" />
@@ -259,7 +221,6 @@ export function Food() {
         )}
       </div>
 
-      {/* Bottom sheet detail */}
       {selectedTruck && (
         <div
           className="fixed inset-0 z-50 flex items-end"
@@ -293,7 +254,9 @@ export function Food() {
             </div>
 
             <div className="px-4 pb-8 space-y-4">
-              <p className="text-muted-foreground text-sm leading-relaxed">{selectedTruck.description}</p>
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                {selectedTruck.description}
+              </p>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-deep-bg rounded-xl p-3">

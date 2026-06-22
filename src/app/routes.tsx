@@ -5,6 +5,7 @@ import { Schedule } from "./components/Schedule";
 import { Map } from "./components/Map";
 import { AIAssistant } from "./components/AIAssistant";
 import { Food } from "./components/Food";
+import { AdminPanel } from "./components/AdminPanel";
 
 export const router = createBrowserRouter([
   {
@@ -17,5 +18,9 @@ export const router = createBrowserRouter([
       { path: "food", Component: Food },
       { path: "assistant", Component: AIAssistant },
     ],
+  },
+  {
+    path: "/admin",
+    Component: AdminPanel,
   },
 ]);

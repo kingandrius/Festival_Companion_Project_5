@@ -22,24 +22,38 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate',    // forces immediate activation
+      registerType: 'autoUpdate',
       workbox: {
-        skipWaiting: true,           // bypass "waiting" phase
-        clientsClaim: true,          // take control of all pages
+        skipWaiting: true,
+        clientsClaim: true,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        // optional: exclude the service worker itself from caching
         navigateFallback: 'index.html',
+        runtimeCaching: [
+          {
+            // Cache Supabase API responses (GET requests)
+            urlPattern: ({ url }) => url.hostname === 'fedgwfuhrvwxpaqewjm.supabase.co',
+            handler: 'CacheFirst',   // ✅ serves from cache instantly when offline
+            options: {
+              cacheName: 'supabase-api-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
+              },
+              cacheableResponse: { statuses: [0, 200] }
+            }
+          }
+        ]
       },
-      manifest: false,               // set to true if you have a manifest.json
-      devOptions: {
-        enabled: true,               // allows testing service worker in dev mode
+      // 👇 Add this: pre‑cache specific API endpoints during installation
+      injectManifest: {
+        injectionPoint: 'self.__WB_MANIFEST'
       },
+      manifest: false,
+      devOptions: { enabled: true }
     }),
   ],
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
+    alias: { '@': path.resolve(__dirname, './src') }
   },
-  assetsInclude: ['**/*.svg', '**/*.csv'],
+  assetsInclude: ['**/*.svg', '**/*.csv']
 })
